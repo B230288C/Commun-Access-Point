@@ -23,7 +23,8 @@ class StoreAppointmentRequest extends FormRequest
             'purpose'            => 'required|string|max:255',
             'personal_in_charge' => 'required|string|max:255',
             'date'               => 'required|date|after_or_equal:today',
-            'time'               => 'required|date_format:H:i',
+            'start_time'         => 'required|date_format:H:i',
+            'end_time'           => 'required|date_format:H:i|after:start_time',
             // status 在 Visitor 创建时不用传
         ];
     }
@@ -40,8 +41,11 @@ class StoreAppointmentRequest extends FormRequest
             'personal_in_charge.required'  => 'Person in charge is required',
             'date.required'                => 'Appointment date is required',
             'date.after_or_equal'          => 'Appointment date cannot be in the past',
-            'time.required'                => 'Appointment time is required',
-            'time.date_format'             => 'Time must be in HH:MM format',
+            'start_time.required'          => 'Start time is required',
+            'start_time.date_format'       => 'Start time must be in HH:MM format',
+            'end_time.required'            => 'End time is required',
+            'end_time.date_format'         => 'End time must be in HH:MM format',
+            'end_time.after'               => 'End time must be after the start time',
         ];
     }
 }
