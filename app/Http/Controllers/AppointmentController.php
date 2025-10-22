@@ -50,13 +50,19 @@ class AppointmentController extends Controller
     public function cancel($id)
     {
         $appointment = $this->appointmentRepo->find($id);
+
         if (!$appointment) {
             return response()->json(['message' => 'Appointment not found'], 404);
         }
 
-        $appointment->status = \App\Enums\AppointmentStatus::Cancelled;
-        $appointment->save();
+    // 通过 Repository 修改状态
+        $updatedAppointment = $this->appointmentRepo->update($id, [
+        'status' => \App\Enums\AppointmentStatus::Cancelled
+        ]);
 
-        return response()->json(['message' => 'Appointment cancelled', 'appointment' => $appointment]);
+        return response()->json([
+        'message' => 'Appointment cancelled',
+        'appointment' => $updatedAppointment
+        ]);
     }
 }
