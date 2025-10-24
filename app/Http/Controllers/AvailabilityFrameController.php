@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\AvailabilityFrameRequest;
 use App\Repositories\AvailabilityFrameRepository;
-use App\Enums\AvailabilityFrameStatus;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 
 class AvailabilityFrameController extends Controller
 {
@@ -19,7 +19,7 @@ class AvailabilityFrameController extends Controller
     /**
      * 获取所有 frame（后台查看）
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $frames = $this->frameRepo->getAll();
         return response()->json($frames);
@@ -28,7 +28,7 @@ class AvailabilityFrameController extends Controller
     /**
      * 根据 staff_id 获取该员工的所有 frame
      */
-    public function getByStaff($staffId)
+    public function getByStaff($staffId): JsonResponse
     {
         $frames = $this->frameRepo->getByStaff($staffId);
         return response()->json($frames);
@@ -37,36 +37,22 @@ class AvailabilityFrameController extends Controller
     /**
      * 获取单个 frame 详情
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $frame = $this->frameRepo->findById($id);
-
-        if (!$frame) {
+        try {
+            $frame = $this->frameRepo->findById($id);
+            return response()->json($frame);
+        } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Availability frame not found'], 404);
         }
-
-        return response()->json($frame);
     }
 
     /**
      * 创建新的 frame
      */
-    public function store(Request $request)
+    public function store(AvailabilityFrameRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'staff_id' => 'required|integer',
-            'date' => 'nullable|date',
-            'day_of_week' => 'nullable|string',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'duration' => 'required|integer|min:5',
-            'interval' => 'nullable|integer|min:0',
-            'is_recurring' => 'boolean',
-            'repeat_group_id' => 'nullable|uuid',
-            'status' => 'nullable|string|in:active,inactive',
-        ]);
-
-        $frame = $this->frameRepo->create($data);
+        $frame = $this->frameRepo->create($request->validated());
 
         return response()->json([
             'message' => 'Availability frame created successfully',
@@ -77,21 +63,10 @@ class AvailabilityFrameController extends Controller
     /**
      * 更新 frame
      */
-    public function update(Request $request, $id)
+    public function update(AvailabilityFrameRequest $request, $id): JsonResponse
     {
-        $data = $request->validate([
-            'date' => 'nullable|date',
-            'day_of_week' => 'nullable|string',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'duration' => 'nullable|integer|min:5',
-            'interval' => 'nullable|integer|min:0',
-            'is_recurring' => 'boolean',
-            'status' => 'nullable|string|in:active,inactive',
-        ]);
-
         try {
-            $frame = $this->frameRepo->update($id, $data);
+            $frame = $this->frameRepo->update($id, $request->validated());
             return response()->json([
                 'message' => 'Availability frame updated successfully',
                 'data' => $frame
@@ -104,7 +79,7 @@ class AvailabilityFrameController extends Controller
     /**
      * 删除单个 frame
      */
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         try {
             $this->frameRepo->delete($id);
@@ -117,7 +92,7 @@ class AvailabilityFrameController extends Controller
     /**
      * 批量删除同组 recurring frame
      */
-    public function deleteByRepeatGroup($repeatGroupId)
+    public function deleteByRepeatGroup($repeatGroupId): JsonResponse
     {
         $count = $this->frameRepo->deleteByRepeatGroup($repeatGroupId);
 
