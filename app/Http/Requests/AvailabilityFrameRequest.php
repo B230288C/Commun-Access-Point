@@ -24,7 +24,7 @@ class AvailabilityFrameRequest extends FormRequest
             'interval' => ['required', 'integer', 'min:0'],
             'is_recurring' => ['required', 'boolean'],
             'repeat_group_id' => ['nullable', 'uuid'],
-            'status' => ['required', 'in:ACTIVE,INACTIVE'],
+            'status' => ['required', 'in:active,inactive'],
         ];
     }
 
@@ -35,7 +35,7 @@ class AvailabilityFrameRequest extends FormRequest
             'staff_id.exists' => 'Invalid staff reference',
             'start_time.required' => 'Start time is required',
             'end_time.after' => 'End time must be after start time',
-            'status.in' => 'Status must be either ACTIVE or INACTIVE',
+            'status.in' => 'Status must be either Active or Inactive',
         ];
     }
 }
