@@ -25,7 +25,7 @@ class StoreAppointmentRequest extends FormRequest
             'date'               => 'required|date|after_or_equal:today',
             'start_time'         => 'required|date_format:H:i',
             'end_time'           => 'required|date_format:H:i|after:start_time',
-            // status 在 Visitor 创建时不用传
+            'staff_id'           => 'required|exists:staff,id',
         ];
     }
 
@@ -46,6 +46,8 @@ class StoreAppointmentRequest extends FormRequest
             'end_time.required'            => 'End time is required',
             'end_time.date_format'         => 'End time must be in HH:MM format',
             'end_time.after'               => 'End time must be after the start time',
+            'staff_id.required'            => 'Staff member is required',
+            'staff_id.exists'              => 'Selected staff does not exist',
         ];
     }
 }

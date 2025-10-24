@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\Staff;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
 use App\Repositories\AppointmentRepository;
-use Illuminate\Http\Request;
+use App\Factories\AppointmentFactory;
 
 class AppointmentController extends Controller
 {
@@ -17,52 +18,76 @@ class AppointmentController extends Controller
         $this->appointmentRepo = $appointmentRepo;
     }
 
-    // 创建预约
+    /**
+     * GET /appointments
+     * Display list of all appointments with pagination
+     */
+    public function index()
+    {
+        $appointments = $this->appointmentRepo->getAll(perPage: 15);
+        return view('appointments.index', compact('appointments'));
+    }
+
+    /**
+     * GET /appointments/create
+     * Display create appointment form
+     */
+    public function create()
+    {
+        $staff = Staff::all();
+        return view('appointments.create', compact('staff'));
+    }
+
+    /**
+     * POST /appointments
+     * Store appointment using AppointmentFactory
+     */
     public function store(StoreAppointmentRequest $request)
     {
-        $data = $request->validated();
-        $appointment = $this->appointmentRepo->create($data);
-        return response()->json($appointment, 201);
+        $appointment = AppointmentFactory::create($request->validated());
+        return redirect()->route('appointments.show', $appointment->id)
+            ->with('success', 'Appointment created successfully');
     }
 
-    // 查看单个预约
-    public function show($id)
+    /**
+     * GET /appointments/{id}
+     * Display single appointment details
+     */
+    public function show(Appointment $appointment)
     {
-        $appointment = $this->appointmentRepo->find($id);
-        if (!$appointment) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
-        return response()->json($appointment);
+        $appointment->load('staff');
+        return view('appointments.show', compact('appointment'));
     }
 
-    // 更新预约
-    public function update(UpdateAppointmentRequest $request, $id)
+    /**
+     * GET /appointments/{id}/edit
+     * Display edit appointment form
+     */
+    public function edit(Appointment $appointment)
     {
-        $data = $request->validated();
-        $appointment = $this->appointmentRepo->update($id, $data);
-        if (!$appointment) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
-        return response()->json($appointment);
+        $staff = Staff::all();
+        return view('appointments.edit', compact('appointment', 'staff'));
     }
 
-    // 取消预约
-    public function cancel($id)
+    /**
+     * PUT /appointments/{id}
+     * Update appointment using AppointmentFactory
+     */
+    public function update(UpdateAppointmentRequest $request, Appointment $appointment)
     {
-        $appointment = $this->appointmentRepo->find($id);
+        $appointment = AppointmentFactory::update($appointment, $request->validated());
+        return redirect()->route('appointments.show', $appointment->id)
+            ->with('success', 'Appointment updated successfully');
+    }
 
-        if (!$appointment) {
-            return response()->json(['message' => 'Appointment not found'], 404);
-        }
-
-    // 通过 Repository 修改状态
-        $updatedAppointment = $this->appointmentRepo->update($id, [
-        'status' => \App\Enums\AppointmentStatus::Cancelled
-        ]);
-
-        return response()->json([
-        'message' => 'Appointment cancelled',
-        'appointment' => $updatedAppointment
-        ]);
+    /**
+     * DELETE /appointments/{id}
+     * Delete appointment using AppointmentFactory
+     */
+    public function destroy(Appointment $appointment)
+    {
+        AppointmentFactory::delete($appointment);
+        return redirect()->route('appointments.index')
+            ->with('success', 'Appointment deleted successfully');
     }
 }
