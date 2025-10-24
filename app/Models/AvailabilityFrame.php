@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AvailabilityFrameStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -35,6 +36,14 @@ class AvailabilityFrame extends Model
         });
     }
 
+    protected $casts = [
+        'is_recurring' => 'boolean',
+        'status' => AvailabilityFrameStatus::class,
+        'date' => 'date',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+    ];
+
     /**
      * 关联到 Staff（反向一对多）
      */
@@ -48,6 +57,6 @@ class AvailabilityFrame extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === AvailabilityFrameStatus::Active;
     }
 }
