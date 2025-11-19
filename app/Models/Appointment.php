@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\AppointmentStatus;
 
 class Appointment extends Model
@@ -16,26 +17,25 @@ class Appointment extends Model
         'phone_number',
         'email',
         'purpose',
-        'personal_in_charge',
-        'date',
-        'start_time',
-        'end_time',
         'status',
         'staff_id',
+        'availability_slot_id',
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
         'status' => AppointmentStatus::class, // 使用 Enum 转换
     ];
 
     /**
      * Appointment 属于一个 Staff
      */
-    public function staff()
+    public function staff(): BelongsTo
     {
         return $this->belongsTo(Staff::class);
+    }
+
+    public function availabilitySlot(): BelongsTo
+    {
+        return $this->belongsTo(AvailabilitySlot::class);
     }
 }

@@ -13,23 +13,15 @@ return new class extends Migration
     {
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('staff_id'); // 关联 Staff
+            $table->foreignId('staff_id')->constrained()->onDelete('cascade');
+            $table->foreignId('availability_slot_id')->constrained()->onDelete('cascade');
             $table->string('visitor_name');
             $table->string('nric_passport');
             $table->string('phone_number');
             $table->string('email');
-            $table->string('purpose');
-            $table->string('personal_in_charge');
-            $table->date('date');
-            $table->time('start_time');
-            $table->time('end_time');
+            $table->text('purpose');
             $table->enum('status', ['pending', 'approved', 'cancelled', 'completed'])->default('pending');
             $table->timestamps();
-
-            $table->foreign('staff_id')
-                  ->references('id')
-                  ->on('staff')
-                  ->onDelete('cascade');
         });
     }
 

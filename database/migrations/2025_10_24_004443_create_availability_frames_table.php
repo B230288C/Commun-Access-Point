@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('staff_id')->constrained()->onDelete('cascade');
             $table->date('date')->nullable();
+            $table->string('title');
             $table->string('day_of_week')->nullable();
             $table->time('start_time');
             $table->time('end_time');

@@ -25,4 +25,9 @@ class Staff extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function availabilityFrames(): HasMany
+    {
+        return $this->hasMany(AvailabilityFrame::class);
+    }
 }

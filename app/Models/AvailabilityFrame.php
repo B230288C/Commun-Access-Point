@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\AvailabilityFrameStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class AvailabilityFrame extends Model
@@ -14,6 +16,7 @@ class AvailabilityFrame extends Model
     protected $fillable = [
         'staff_id',
         'date',
+        'title',
         'day_of_week',
         'start_time',
         'end_time',
@@ -47,13 +50,18 @@ class AvailabilityFrame extends Model
     /**
      * 关联到 Staff（反向一对多）
      */
-    public function staff()
+    public function staff(): BelongsTo
     {
         return $this->belongsTo(Staff::class);
     }
 
+    public function availabilitySlots(): HasMany
+    {
+        return $this->hasMany(AvailabilitySlot::class);
+    }
+
     /**
-     * 判断 frame 是否有效（例如未过期）
+     * 判断 frame 是否有效
      */
     public function isActive(): bool
     {
