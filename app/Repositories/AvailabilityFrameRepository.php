@@ -17,7 +17,7 @@ class AvailabilityFrameRepository
     /**
      * 根据 staff_id 获取该员工的所有 frame
      */
-    public function getByStaff($staffId)
+    public function getByStaff(int $staffId)
     {
         return AvailabilityFrame::where('staff_id', $staffId)
             ->orderBy('date', 'asc')
@@ -27,7 +27,7 @@ class AvailabilityFrameRepository
     /**
      * 根据 ID 获取单个 frame
      */
-    public function findById($id)
+    public function findById(int $id): AvailabilityFrame
     {
         return AvailabilityFrame::findOrFail($id);
     }
@@ -35,7 +35,7 @@ class AvailabilityFrameRepository
     /**
      * 创建新的 frame
      */
-    public function create(array $data)
+    public function create(array $data): AvailabilityFrame
     {
         return AvailabilityFrame::create($data);
     }
@@ -43,7 +43,7 @@ class AvailabilityFrameRepository
     /**
      * 更新 frame
      */
-    public function update($id, array $data)
+    public function update(int $id, array $data): AvailabilityFrame
     {
         $frame = $this->findById($id);
         $frame->update($data);
@@ -53,7 +53,7 @@ class AvailabilityFrameRepository
     /**
      * 删除单个 frame
      */
-    public function delete($id)
+    public function delete(int $id): bool
     {
         $frame = $this->findById($id);
         return $frame->delete();
@@ -62,7 +62,7 @@ class AvailabilityFrameRepository
     /**
      * 批量删除同组的 recurring frames
      */
-    public function deleteByRepeatGroup($repeatGroupId)
+    public function deleteByRepeatGroup(string $repeatGroupId): int
     {
         return AvailabilityFrame::where('repeat_group_id', $repeatGroupId)->delete();
     }

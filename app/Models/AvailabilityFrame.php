@@ -39,14 +39,6 @@ class AvailabilityFrame extends Model
         });
     }
 
-    protected $casts = [
-        'is_recurring' => 'boolean',
-        'status' => AvailabilityFrameStatus::class,
-        'date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
-    ];
-
     /**
      * 关联到 Staff（反向一对多）
      */

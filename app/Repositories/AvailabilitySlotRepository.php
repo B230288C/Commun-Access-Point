@@ -44,6 +44,10 @@ class AvailabilitySlotRepository
     {
         $slot = AvailabilitySlot::find($id);
 
+        if (!$slot) {
+            return false;
+        }
+
         if ($slot->appointment()->exists()) {
             return false;
         }

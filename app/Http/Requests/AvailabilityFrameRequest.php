@@ -18,13 +18,14 @@ class AvailabilityFrameRequest extends FormRequest
             'staff_id' => ['required', 'exists:staff,id'],
             'date' => ['nullable', 'date'],
             'day_of_week' => ['nullable', 'string'],
-            'start_time' => ['required', 'date_format:H:i:s'],
-            'end_time' => ['required', 'date_format:H:i:s', 'after:start_time'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'duration' => ['required', 'integer', 'min:1'],
             'interval' => ['required', 'integer', 'min:0'],
             'is_recurring' => ['required', 'boolean'],
             'repeat_group_id' => ['nullable', 'uuid'],
             'status' => ['required', 'in:active,inactive'],
+            'title' => ['required', 'string', 'max:255'],
         ];
     }
 

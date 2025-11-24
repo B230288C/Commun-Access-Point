@@ -20,8 +20,10 @@ class StoreAvailabilitySlotRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'availability_frame_id' => 'required|exists:availability_frames,id',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
+            'status' => 'sometimes|in:available,booked',
         ];
     }
 
