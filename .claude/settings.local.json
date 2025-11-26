@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\app\" 2)",
+      "Bash(nul)",
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\tests\" 2)",
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\resources\" 2)",
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\database\" 2)",
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\routes\" 2)",
+      "Bash(dir /b D:communEdTechCommun-Access-Pointconfig 2)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
