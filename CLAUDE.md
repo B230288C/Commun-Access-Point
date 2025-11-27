@@ -194,3 +194,33 @@ Project documentation is organized in the `@docs/` directory:
 - **Database**: MySQL
 - **Testing**: PHPUnit 11, Mockery
 - **Code Quality**: Pint (Laravel code formatter)
+
+## UI Guidelines
+
+- The staff/visitor calendar uses React Big Calendar.
+- All styling for calendar events, slots, headers, and tooltips must follow `style_guide.md`.
+- When generating or editing calendar components, map frame/slot data to Big Calendar events accordingly.
+- Claude is allowed to modify `style_guide.md` when necessary.
+- Any change to `style_guide.md` must be applied consistently across all affected components.
+- All colors, typography, spacing, and states in existing components must be updated to match the revised style guide.
+- Always check for and correct inconsistencies in UI components whenever `style_guide.md` is changed.
+
+Claude must follow `style_guide.md` as the single source of truth for all UI elements, including:
+- Colors (primary, neutral, hover, active, disabled, muted)
+- Typography (fonts, sizes, line heights)
+- Spacing (padding, margin, gaps)
+- Border radius, card, buttons, inputs, tables
+- Icon sizes and states
+
+Rules for modifying or creating components:
+1. When generating new UI components (Blade, Tailwind, CSS, React/JSX), always refer to `style_guide.md` for colors, fonts, spacing, and states.
+2. When editing existing components, check for inconsistencies with `style_guide.md` and correct them automatically.
+3. If a design detail is missing, infer it from the closest matching pattern in `style_guide.md`.
+4. Do not introduce new styles that are not defined or consistent with `style_guide.md`.
+
+### Style Guide Modification Workflow
+1. If a change to `style_guide.md` is needed, first identify which components are affected.
+2. Update `style_guide.md` with the new style or correction.
+3. Immediately update all affected components to comply with the new guide.
+4. Run UI tests or visual checks to ensure consistency.
+5. Document the change in `@docs/components/` if necessary.
