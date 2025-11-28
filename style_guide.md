@@ -64,6 +64,7 @@ must follow these standardized state transformations.
 - Disabled: Primary Disabled
 
 ## 5. Icons
+- Library: Font Awesome
 - Size: 20px
 - Icon States: default / hover / active
 
