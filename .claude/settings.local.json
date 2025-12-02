@@ -9,7 +9,10 @@
       "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\routes\" 2)",
       "Bash(dir /b D:communEdTechCommun-Access-Pointconfig 2)",
       "Bash(npm install react-big-calendar)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(code:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

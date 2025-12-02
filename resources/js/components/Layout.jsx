@@ -1,22 +1,20 @@
-import React from 'react';
+import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
+    const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
     return (
-        <div className="min-h-screen bg-[#FAFAFA]">
-            {/* Header */}
+        <div className="layout-container">
             <Header />
-
-            <div className="flex">
-                {/* Sidebar */}
-                <Sidebar />
-
-                {/* Main Content Area */}
-                <main className="flex-1 ml-16 p-6">
-                    {children}
-                </main>
-            </div>
+            <Sidebar
+                isExpanded={sidebarExpanded}
+                onExpandChange={setSidebarExpanded}
+            />
+            <main className={`main-content ${sidebarExpanded ? 'ml-48' : 'ml-16'}`}>
+                {children}
+            </main>
         </div>
     );
 };

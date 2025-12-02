@@ -9,3 +9,220 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ========================================
+   Layout Components
+   ======================================== */
+
+/* Layout Container */
+.layout-container {
+    @apply min-h-screen bg-[#FAFAFA];
+}
+
+/* Header */
+.header {
+    @apply fixed top-0 left-0 right-0 z-50;
+    @apply h-16 bg-white border-b border-[#E0E0E0];
+    @apply flex items-center justify-between px-6;
+    @apply shadow-[0_1px_2px_rgba(0,0,0,0.05)];
+}
+
+.header-title {
+    @apply text-2xl font-bold text-[#1F1F1F];
+}
+
+.header-actions {
+    @apply flex items-center gap-4;
+}
+
+/* Sidebar */
+.sidebar {
+    @apply fixed left-0 top-16 z-40;
+    @apply h-[calc(100vh-4rem)] bg-white border-r border-[#E0E0E0];
+    @apply shadow-[0_1px_2px_rgba(0,0,0,0.05)];
+    @apply transition-all duration-300 ease-in-out;
+}
+
+.sidebar-nav {
+    @apply flex flex-col gap-2 p-3;
+}
+
+.sidebar-item {
+    @apply flex items-center gap-4 px-2 py-3 rounded-lg;
+    @apply transition-all duration-150 ease-in-out;
+}
+
+.sidebar-item-default {
+    @apply text-[#6D6D6D];
+    @apply hover:bg-[#F5F5F5] active:bg-[#EFEFEF];
+}
+
+.sidebar-item-active {
+    @apply bg-[#2563EB] text-white;
+}
+
+.sidebar-item-icon {
+    @apply flex-shrink-0;
+}
+
+.sidebar-item-label {
+    @apply text-sm font-medium whitespace-nowrap;
+    @apply transition-all duration-300 ease-in-out;
+    @apply overflow-hidden;
+}
+
+.sidebar-item-label-collapsed {
+    @apply opacity-0 max-w-0;
+}
+
+.sidebar-item-label-expanded {
+    @apply opacity-100 max-w-xs;
+}
+
+/* Main Content */
+.main-content {
+    @apply flex-1 p-6;
+    @apply mt-16;
+    @apply transition-all duration-300 ease-in-out;
+}
+
+/* ========================================
+   Button Components
+   ======================================== */
+
+/* Icon Button */
+.btn-icon {
+    @apply flex items-center justify-center w-10 h-10;
+    @apply text-[#6D6D6D];
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:text-[#1E4FCC] hover:scale-110;
+    @apply active:text-[#1B49B2];
+}
+
+/* Primary Button */
+.btn-primary {
+    @apply h-10 px-3 rounded-lg;
+    @apply bg-[#2563EB] text-white;
+    @apply text-sm font-medium;
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:bg-[#1E4FCC];
+    @apply active:bg-[#1B49B2];
+    @apply disabled:opacity-50 disabled:bg-[#557ed688] disabled:cursor-not-allowed;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    @apply h-10 px-3 rounded-lg;
+    @apply bg-white text-[#6D6D6D] border border-[#E0E0E0];
+    @apply text-sm font-medium;
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:bg-[#F5F5F5];
+    @apply active:bg-[#EFEFEF];
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* ========================================
+   Card Components
+   ======================================== */
+
+.card {
+    @apply bg-white rounded-xl border border-black;
+    @apply shadow-[0_1px_2px_rgba(0,0,0,0.05)];
+}
+
+.card-header {
+    @apply px-6 py-4 border-b border-[#E0E0E0];
+}
+
+.card-body {
+    @apply p-6;
+}
+
+.card-footer {
+    @apply px-6 py-4 border-t border-[#E0E0E0];
+}
+
+/* ========================================
+   Form Components
+   ======================================== */
+
+.input {
+    @apply h-10 px-3 rounded-lg;
+    @apply border border-[#E0E0E0] bg-white;
+    @apply text-sm text-[#1F1F1F];
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:border-[#C9C9C9];
+    @apply focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB];
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+}
+
+.label {
+    @apply block text-sm font-medium text-[#1F1F1F] mb-1;
+}
+
+.helper-text {
+    @apply text-xs text-[#6D6D6D] mt-1;
+}
+
+.error-text {
+    @apply text-xs text-red-500 mt-1;
+}
+
+/* ========================================
+   Table Components
+   ======================================== */
+
+.table {
+    @apply w-full border-collapse;
+}
+
+.table-header {
+    @apply bg-[#F5F5F5] text-[#6D6D6D] text-sm font-medium;
+}
+
+.table-header-cell {
+    @apply px-3 py-3 text-left border-b border-[#E0E0E0];
+}
+
+.table-row {
+    @apply border-b border-[#E0E0E0];
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:bg-[#F5F5F5];
+    @apply active:bg-[#EFEFEF];
+}
+
+.table-cell {
+    @apply px-3 py-3 text-sm text-[#1F1F1F];
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.text-primary {
+    @apply text-[#1F1F1F];
+}
+
+.text-secondary {
+    @apply text-[#6D6D6D];
+}
+
+.text-muted {
+    @apply text-[#6D6D6D] text-xs;
+}
+
+.shadow-level-1 {
+    @apply shadow-[0_1px_2px_rgba(0,0,0,0.05)];
+}
+
+.shadow-level-2 {
+    @apply shadow-[0_2px_10px_rgba(0,0,0,0.08)];
+}
+
+.shadow-level-3 {
+    @apply shadow-[0_4px_20px_rgba(0,0,0,0.12)];
+}

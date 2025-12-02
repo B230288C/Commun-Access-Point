@@ -19,7 +19,7 @@
         "@vitejs/plugin-react": "^5.0.4",
         "dayjs": "^1.11.19",
         "react": "^19.2.0",
-        "react-big-calendar": "^1.19.4",
-        "react-dom": "^19.2.0"
+        "react-dom": "^19.2.0",
+        "react-full-calendar": "^0.12.3"
     }
 }
