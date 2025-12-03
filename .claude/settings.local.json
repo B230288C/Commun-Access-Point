@@ -12,7 +12,10 @@
       "Bash(npm install:*)",
       "Bash(code:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\resources\\js\\components\")",
+      "Bash(dir:*)",
+      "WebFetch(domain:fullcalendar.io)"
     ],
     "deny": [],
     "ask": []
