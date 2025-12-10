@@ -226,3 +226,203 @@
 .shadow-level-3 {
     @apply shadow-[0_4px_20px_rgba(0,0,0,0.12)];
 }
+
+/* ========================================
+   Dropdown Components
+   ======================================== */
+
+.account-dropdown {
+    @apply relative;
+}
+
+.dropdown-menu {
+    @apply absolute right-0 top-[calc(100%+8px)];
+    @apply w-64 bg-white rounded-lg border border-[#E0E0E0];
+    @apply shadow-[0_2px_10px_rgba(0,0,0,0.08)];
+    @apply py-2;
+    @apply z-50;
+}
+
+.dropdown-user-info {
+    @apply px-4 py-3;
+}
+
+.dropdown-user-name {
+    @apply text-sm font-semibold text-[#1F1F1F];
+    @apply truncate;
+}
+
+.dropdown-user-email {
+    @apply text-xs text-[#6D6D6D];
+    @apply truncate;
+    @apply mt-1;
+}
+
+.dropdown-divider {
+    @apply h-px bg-[#E0E0E0];
+    @apply my-2;
+}
+
+.dropdown-item {
+    @apply w-full flex items-center gap-3;
+    @apply px-4 py-2;
+    @apply text-sm text-[#1F1F1F];
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:bg-[#F5F5F5];
+    @apply active:bg-[#EFEFEF];
+    @apply cursor-pointer;
+}
+
+.dropdown-item i {
+    @apply text-[#6D6D6D] w-5 text-center;
+}
+
+/* ========================================
+   Calendar Layout Components
+   ======================================== */
+
+.appointment-calendar-container {
+    @apply flex w-full h-full;
+    @apply bg-[#FAFAFA];
+}
+
+.appointment-calendar {
+    @apply flex-1 p-6;
+    @apply overflow-auto;
+}
+
+/* ========================================
+   Modal Backdrop
+   ======================================== */
+
+.modal-backdrop {
+    @apply fixed inset-0;
+    @apply bg-black/20;
+    @apply opacity-0 pointer-events-none;
+    @apply transition-opacity duration-200 ease-in-out;
+    @apply z-40;
+}
+
+.modal-backdrop.modal-backdrop-open {
+    @apply opacity-100 pointer-events-auto;
+}
+
+/* ========================================
+   Floating Panel Components
+   ======================================== */
+
+.floating-panel {
+    @apply fixed;
+    @apply w-[480px] max-h-[600px] bg-white;
+    @apply rounded-xl border border-[#E0E0E0];
+    @apply shadow-[0_4px_20px_rgba(0,0,0,0.12)];
+    @apply opacity-0 scale-95 pointer-events-none;
+    @apply transition-all duration-200 ease-in-out;
+    @apply z-50;
+    @apply flex flex-col;
+}
+
+.floating-panel.floating-panel-open {
+    @apply opacity-100 scale-100 pointer-events-auto;
+}
+
+.floating-panel-header {
+    @apply flex items-center justify-between;
+    @apply px-6 py-4 border-b border-[#E0E0E0];
+    @apply flex-shrink-0;
+}
+
+.floating-panel-title {
+    @apply text-lg font-semibold text-[#1F1F1F];
+}
+
+.floating-panel-close {
+    @apply w-8 h-8 flex items-center justify-center;
+    @apply text-[#6D6D6D] hover:text-[#1F1F1F];
+    @apply transition-colors duration-150 ease-in-out;
+    @apply cursor-pointer;
+}
+
+.floating-panel-body {
+    @apply px-6 py-4;
+    @apply flex-1 overflow-y-auto;
+}
+
+.floating-panel-actions {
+    @apply flex items-center justify-end gap-3;
+    @apply pt-4 mt-4 border-t border-[#E0E0E0];
+}
+
+/* Form Components for Floating Panel */
+.form-section {
+    @apply mb-6;
+}
+
+.form-section-title {
+    @apply text-sm font-semibold text-[#1F1F1F] mb-3;
+}
+
+.time-slot-display {
+    @apply flex flex-col gap-2;
+    @apply p-4 bg-[#F5F5F5] rounded-lg;
+    @apply border border-[#E0E0E0];
+}
+
+.time-slot-item {
+    @apply flex items-center gap-2;
+    @apply text-sm text-[#1F1F1F];
+}
+
+.time-slot-item i {
+    @apply text-[#6D6D6D] w-5;
+}
+
+.form-group {
+    @apply mb-4;
+}
+
+.form-row {
+    @apply grid grid-cols-2 gap-4;
+    @apply mb-4;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-[#1F1F1F] mb-2;
+}
+
+.form-input {
+    @apply w-full h-10 px-3 rounded-lg;
+    @apply border border-[#E0E0E0] bg-white;
+    @apply text-sm text-[#1F1F1F];
+    @apply transition-all duration-150 ease-in-out;
+    @apply hover:border-[#C9C9C9];
+    @apply focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB];
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#F5F5F5];
+}
+
+.form-checkbox {
+    @apply flex items-center gap-2;
+    @apply cursor-pointer;
+}
+
+.form-checkbox input[type="checkbox"] {
+    @apply w-4 h-4 rounded;
+    @apply border border-[#E0E0E0];
+    @apply text-[#2563EB];
+    @apply focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-0;
+    @apply transition-colors duration-150;
+}
+
+.form-checkbox span {
+    @apply text-sm text-[#1F1F1F];
+}
+
+.text-required {
+    @apply text-red-500;
+}
+
+.alert-error {
+    @apply p-3 mb-4;
+    @apply bg-red-50 border border-red-200 rounded-lg;
+    @apply text-sm text-red-700;
+}

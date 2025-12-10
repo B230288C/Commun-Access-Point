@@ -7,7 +7,7 @@ use App\Http\Controllers\AvailabilityFrameController;
 // ==========================
 // Appointment Routes
 // ==========================
-Route::prefix('appointments')->group(function () {
+Route::prefix('appointments')->middleware('auth')->group(function () {
     // 创建预约
     Route::post('/', [AppointmentController::class, 'store']);
 
@@ -24,7 +24,7 @@ Route::prefix('appointments')->group(function () {
 // ==========================
 // Availability Frame Routes
 // ==========================
-Route::prefix('availability-frames')->group(function () {
+Route::prefix('availability-frames')->middleware('auth')->group(function () {
     // 获取所有 frame（管理员用）
     Route::get('/', [AvailabilityFrameController::class, 'index']);
 

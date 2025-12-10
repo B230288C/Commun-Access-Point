@@ -17,7 +17,7 @@ class AvailabilityFrame extends Model
         'staff_id',
         'date',
         'title',
-        'day_of_week',
+        'day',
         'start_time',
         'end_time',
         'duration',

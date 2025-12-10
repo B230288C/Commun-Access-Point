@@ -4,6 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
+import CreateAvailabilityFrameModal from './CreateAvailabilityFrameModal';
 
 const AppointmentCalendar = () => {
     const calendarRef = useRef(null);
@@ -13,7 +14,12 @@ const AppointmentCalendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // Events data - will be populated from API/props
-    const [allEvents] = useState([]);
+    const [allEvents, setAllEvents] = useState([]);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalInitialData, setModalInitialData] = useState(null);
+    const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
 
     // Filter events based on search term and status
     const filteredEvents = useMemo(() => {
@@ -118,12 +124,155 @@ const AppointmentCalendar = () => {
         });
     };
 
+    // Calculate modal position near the clicked element
+    const calculateModalPosition = (jsEvent) => {
+        const clickX = jsEvent.pageX;
+        const clickY = jsEvent.pageY;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const modalWidth = 480;
+        const modalHeight = 600; // Approximate height
+        const offset = 20;
+
+        let x = clickX + offset;
+        let y = clickY;
+
+        // Adjust if modal would go off right edge
+        if (x + modalWidth > windowWidth) {
+            x = clickX - modalWidth - offset;
+        }
+
+        // Adjust if modal would go off bottom edge
+        if (y + modalHeight > windowHeight) {
+            y = windowHeight - modalHeight - offset;
+        }
+
+        // Ensure it doesn't go off top edge
+        if (y < offset) {
+            y = offset;
+        }
+
+        return { x, y };
+    };
+
+    // Handle calendar selection (drag to create new frame)
+    const handleSelect = (selectInfo) => {
+        const { start, end, jsEvent } = selectInfo;
+
+        // Format date and times
+        const date = start.toISOString().split('T')[0];
+        const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
+        const endTime = end.toTimeString().split(' ')[0].substring(0, 5);
+        const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+
+        // Calculate position
+        if (jsEvent) {
+            setModalPosition(calculateModalPosition(jsEvent));
+        }
+
+        // Open modal with pre-filled data
+        setModalInitialData({
+            date,
+            start_time: startTime,
+            end_time: endTime,
+            day,
+        });
+        setIsModalOpen(true);
+
+        // Unselect the time range
+        const calendarApi = calendarRef.current?.getApi();
+        if (calendarApi) {
+            calendarApi.unselect();
+        }
+    };
+
+    // Handle event resize (staff resizes existing frame)
+    const handleEventResize = (resizeInfo) => {
+        const { event, jsEvent } = resizeInfo;
+        const { start, end } = event;
+
+        // Format date and times
+        const date = start.toISOString().split('T')[0];
+        const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
+        const endTime = end.toTimeString().split(' ')[0].substring(0, 5);
+        const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+
+        // Calculate position
+        if (jsEvent) {
+            setModalPosition(calculateModalPosition(jsEvent));
+        }
+
+        // Open modal with resized data
+        setModalInitialData({
+            date,
+            start_time: startTime,
+            end_time: endTime,
+            day,
+            title: event.title || '',
+            eventId: event.id,
+        });
+        setIsModalOpen(true);
+
+        // Keep the resized event visible (don't revert)
+    };
+
+    // Handle event drop (staff drags existing frame to new time)
+    const handleEventDrop = (dropInfo) => {
+        const { event, jsEvent } = dropInfo;
+        const { start, end } = event;
+
+        // Format date and times
+        const date = start.toISOString().split('T')[0];
+        const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
+        const endTime = end ? end.toTimeString().split(' ')[0].substring(0, 5) : '';
+        const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+
+        // Calculate position
+        if (jsEvent) {
+            setModalPosition(calculateModalPosition(jsEvent));
+        }
+
+        // Open modal with dropped data
+        setModalInitialData({
+            date,
+            start_time: startTime,
+            end_time: endTime,
+            day,
+            title: event.title || '',
+            eventId: event.id,
+        });
+        setIsModalOpen(true);
+
+        // Keep the dropped event visible (don't revert)
+    };
+
+    // Handle successful frame creation
+    const handleFrameCreated = (newFrame) => {
+        // Add the new frame to the calendar events
+        setAllEvents(prev => [
+            ...prev,
+            {
+                id: newFrame.id,
+                title: newFrame.title,
+                start: `${newFrame.date}T${newFrame.start_time}`,
+                end: `${newFrame.date}T${newFrame.end_time}`,
+                extendedProps: {
+                    status: newFrame.status,
+                    duration: newFrame.duration,
+                    interval: newFrame.interval,
+                    is_recurring: newFrame.is_recurring,
+                },
+            },
+        ]);
+    };
+
     return (
-        <div className="appointment-calendar w-full h-full p-6 bg-[#FAFAFA]">
-            {/* Page Title */}
-            <h1 className="text-2xl font-bold text-[#1F1F1F] mb-6">
-                Appointment Calendar
-            </h1>
+        <div className="appointment-calendar-container">
+            <div className="appointment-calendar">
+                {/* Page Title */}
+                <h1 className="text-2xl font-bold text-[#1F1F1F] mb-6">
+                    Appointment Calendar
+                </h1>
 
             {/* Top Controls Container */}
             <div className="controls-container bg-white rounded-xl border border-[#E0E0E0] p-4 mb-4 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
@@ -317,6 +466,9 @@ const AppointmentCalendar = () => {
                     eventResourceEditable={false}
                     // Event handlers
                     dateClick={handleDateClick}
+                    select={handleSelect}
+                    eventResize={handleEventResize}
+                    eventDrop={handleEventDrop}
                     eventClick={(info) => {
                         alert(`Event: ${info.event.title}\nStatus: ${info.event.extendedProps.status}`);
                     }}
@@ -325,6 +477,16 @@ const AppointmentCalendar = () => {
                     }}
                 />
             </div>
+            </div>
+
+            {/* Create Availability Frame Floating Panel */}
+            <CreateAvailabilityFrameModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                initialData={modalInitialData}
+                onSuccess={handleFrameCreated}
+                position={modalPosition}
+            />
         </div>
     );
 };

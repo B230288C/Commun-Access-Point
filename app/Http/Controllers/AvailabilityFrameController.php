@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Factories\AvailabilityFrameFactory;
 use App\Http\Requests\AvailabilityFrameRequest;
+use App\Http\Requests\CreateAvailabilityFrameRequest;
+use App\Http\Resources\AvailabilityFrameResource;
 use App\Repositories\AvailabilityFrameRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -50,14 +53,21 @@ class AvailabilityFrameController extends Controller
     /**
      * 创建新的 frame
      */
-    public function store(AvailabilityFrameRequest $request): JsonResponse
+    public function store(CreateAvailabilityFrameRequest $request): JsonResponse
     {
-        $frame = $this->frameRepo->create($request->validated());
+        try {
+            $frame = AvailabilityFrameFactory::create($request->validated());
 
-        return response()->json([
-            'message' => 'Availability frame created successfully',
-            'data' => $frame
-        ], 201);
+            return response()->json([
+                'message' => 'Availability frame created successfully',
+                'data' => new AvailabilityFrameResource($frame),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create availability frame',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
