@@ -82,6 +82,70 @@
     color: #FFFFFF !important;
 }
 
+/* ========================================
+   Month View (dayGridMonth) - Show frame title, hide slots
+   Standard horizontal layout (reset any time grid styles)
+   ======================================== */
+
+/* Color cells that have events */
+.fc-dayGridMonth-view .fc-daygrid-day:has(.fc-event) {
+    background-color: #DBEAFE !important;
+}
+
+.fc-dayGridMonth-view .fc-daygrid-day:has(.fc-event):hover {
+    background-color: #BFDBFE !important;
+}
+
+/* Today with events */
+.fc-dayGridMonth-view .fc-day-today:has(.fc-event) {
+    background-color: #C7D2FE !important;
+}
+
+/* Hide slot events in month view */
+.fc-dayGridMonth-view .event-slot {
+    display: none !important;
+}
+
+/* Style frame events in month view - standard horizontal display */
+.fc-dayGridMonth-view .event-frame {
+    background-color: #2563EB !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    margin: 1px 2px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    /* Reset any time grid positioning */
+    position: relative !important;
+    left: auto !important;
+    width: auto !important;
+    inset-inline-start: auto !important;
+}
+
+/* Reset vertical text styles for month view */
+.fc-dayGridMonth-view .event-frame .fc-event-main {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    transform: none !important;
+    display: block !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.fc-dayGridMonth-view .event-frame .fc-event-title {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+    text-align: left !important;
+}
+
+/* Show time in month view if needed */
+.fc-dayGridMonth-view .event-frame .fc-event-time {
+    display: none !important;
+}
+
 /* Time grid (week/day view) - Clean view with hidden grid lines */
 .fc .fc-timegrid-slot {
     height: 48px !important;
@@ -244,25 +308,23 @@
     height: 24px !important;
 }
 
-/* Year view: compact event dots */
+/* Year view: Hide events but color cells with events */
 .fc-multimonth .fc-daygrid-day-events {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-    margin-top: 1px;
+    display: none !important; /* Hide the events container completely */
 }
 
-.fc-multimonth .fc-event {
-    width: 5px !important;
-    height: 5px !important;
-    border-radius: 50% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: 0 !important;
+/* Color cells that have events using :has() selector */
+.fc-multimonth .fc-daygrid-day:has(.fc-event) {
+    background-color: #DBEAFE !important; /* Light blue for dates with events */
 }
 
-.fc-multimonth .fc-event-title {
-    display: none !important;
+.fc-multimonth .fc-daygrid-day:has(.fc-event):hover {
+    background-color: #BFDBFE !important; /* Slightly darker on hover */
+}
+
+/* Keep today highlighting but blend with event color */
+.fc-multimonth .fc-day-today:has(.fc-event) {
+    background-color: #C7D2FE !important; /* Blend of today and event colors */
 }
 
 /* Reduce vertical spacing in year view table */

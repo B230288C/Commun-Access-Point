@@ -19,7 +19,8 @@
       "Bash(php artisan:*)",
       "Bash(npx vite build:*)",
       "Bash(php -l:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(del \"D:\\communEdTech\\Commun-Access-Point\\resources\\js\\components\\UpdateAvailabilitySlotModal.jsx\")"
     ],
     "deny": [],
     "ask": []

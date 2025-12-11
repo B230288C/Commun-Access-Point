@@ -26,7 +26,7 @@ const AppointmentCalendar = () => {
     const [createModalData, setCreateModalData] = useState(null);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
 
-    // Update modal state
+    // Update frame modal state
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [updateFrameData, setUpdateFrameData] = useState(null);
 
@@ -66,12 +66,13 @@ const AppointmentCalendar = () => {
     // Transform slot data to FullCalendar event format
     const transformSlotToEvent = useCallback((slot, frame) => ({
         id: `slot-${slot.id}`,
-        title: `${slot.start_time?.substring(0, 5)} - ${slot.end_time?.substring(0, 5)}`,
+        title: '', // No title display for slots
         start: `${frame.date}T${slot.start_time}`,
         end: `${frame.date}T${slot.end_time}`,
         backgroundColor: '#FFEBB7',
         borderColor: '#E0E0E0',
         classNames: ['event-slot'],
+        displayEventTime: false, // Hide time display for slots
         extendedProps: {
             type: 'slot',
             slotId: slot.id,
@@ -139,6 +140,13 @@ const AppointmentCalendar = () => {
     // Filter events based on search term and status
     const filteredEvents = useMemo(() => {
         return allEvents.filter((event) => {
+            // In year/month view, only show frames (exclude slots)
+            if (viewMode === 'year' || viewMode === 'month') {
+                if (event.extendedProps.type === 'slot') {
+                    return false;
+                }
+            }
+
             // Filter by search term
             const matchesSearch = event.title
                 .toLowerCase()
@@ -151,7 +159,7 @@ const AppointmentCalendar = () => {
 
             return matchesSearch && matchesStatus;
         });
-    }, [allEvents, searchTerm, selectedStatus]);
+    }, [allEvents, searchTerm, selectedStatus, viewMode]);
 
     // Handler functions
     const onSearchChange = (value) => {
@@ -195,15 +203,14 @@ const AppointmentCalendar = () => {
     const handleDateClick = (info) => {
         const calendarApi = calendarRef.current?.getApi();
         if (calendarApi) {
-            // Navigate to the clicked date
-            calendarApi.gotoDate(info.date);
-
-            // Drill down based on current view
+            // In year or month view, only navigate to day view (no modal)
             if (viewMode === 'year' || viewMode === 'month') {
-                // Switch to day view when clicking from year or month view
+                // Navigate to the clicked date and switch to day view
+                calendarApi.gotoDate(info.date);
                 setViewMode('day');
                 calendarApi.changeView('timeGridDay');
             }
+            // In week/day view, date clicks are handled by select event
         }
     };
 
@@ -272,6 +279,16 @@ const AppointmentCalendar = () => {
 
     // Handle calendar selection (drag to create new frame)
     const handleSelect = (selectInfo) => {
+        // Only allow selection to open modal in week/day views
+        if (viewMode === 'year' || viewMode === 'month') {
+            // Unselect and do nothing in year/month views
+            const calendarApi = calendarRef.current?.getApi();
+            if (calendarApi) {
+                calendarApi.unselect();
+            }
+            return;
+        }
+
         const { start, end, jsEvent } = selectInfo;
 
         // Format date and times
@@ -324,16 +341,22 @@ const AppointmentCalendar = () => {
         };
     };
 
-    // Handle event click (open update modal)
+    // Handle event click (open update modal for frames only)
     const handleEventClick = (clickInfo) => {
         const { event, jsEvent } = clickInfo;
+
+        // Only handle frame events, ignore slot clicks
+        const eventType = event.extendedProps.type;
+        if (eventType === 'slot') {
+            return;
+        }
 
         // Calculate position
         if (jsEvent) {
             setModalPosition(calculateModalPosition(jsEvent));
         }
 
-        // Extract frame data and open update modal
+        // Open frame update modal
         const frameData = extractFrameDataFromEvent(event);
         setUpdateFrameData(frameData);
         setIsUpdateModalOpen(true);
@@ -646,7 +669,7 @@ const AppointmentCalendar = () => {
                     editable={true}
                     selectable={true}
                     selectMirror={true}
-                    dayMaxEvents={true}
+                    dayMaxEvents={3} // Show max 3 events, then "+n more"
                     weekends={true}
                     eventOverlap={true}
                     // Drag configuration
