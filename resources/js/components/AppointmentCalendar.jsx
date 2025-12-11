@@ -46,6 +46,7 @@ const AppointmentCalendar = () => {
         end: `${frame.date}T${frame.end_time}`,
         backgroundColor: frame.status === 'active' ? '#2563EB' : '#6D6D6D',
         borderColor: frame.status === 'active' ? '#1E4FCC' : '#4A4A4A',
+        classNames: ['event-frame'],
         extendedProps: {
             type: 'frame',
             frameId: frame.id,
@@ -61,10 +62,44 @@ const AppointmentCalendar = () => {
         },
     }), []);
 
-    // Transform all frames to calendar events (recurring instances are in DB)
+    // Transform slot data to FullCalendar event format
+    const transformSlotToEvent = useCallback((slot, frame) => ({
+        id: `slot-${slot.id}`,
+        title: `${slot.start_time?.substring(0, 5)} - ${slot.end_time?.substring(0, 5)}`,
+        start: `${frame.date}T${slot.start_time}`,
+        end: `${frame.date}T${slot.end_time}`,
+        backgroundColor: '#FFEBB7',
+        borderColor: '#E0E0E0',
+        classNames: ['event-slot'],
+        extendedProps: {
+            type: 'slot',
+            slotId: slot.id,
+            frameId: frame.id,
+            status: slot.status,
+            frameTitle: frame.title,
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+        },
+    }), []);
+
+    // Transform all frames and slots to calendar events
     const allEvents = useMemo(() => {
-        return frames.map(transformFrameToEvent);
-    }, [frames, transformFrameToEvent]);
+        const events = [];
+
+        frames.forEach((frame) => {
+            // Add frame event
+            events.push(transformFrameToEvent(frame));
+
+            // Add slot events if available
+            if (frame.slots && Array.isArray(frame.slots)) {
+                frame.slots.forEach((slot) => {
+                    events.push(transformSlotToEvent(slot, frame));
+                });
+            }
+        });
+
+        return events;
+    }, [frames, transformFrameToEvent, transformSlotToEvent]);
 
     // Fetch frames on component mount
     useEffect(() => {
