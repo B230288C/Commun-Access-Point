@@ -76,13 +76,20 @@ class AvailabilityFrameController extends Controller
     public function update(AvailabilityFrameRequest $request, $id): JsonResponse
     {
         try {
-            $frame = $this->frameRepo->update($id, $request->validated());
+            $frame = $this->frameRepo->findById($id);
+            $updatedFrame = AvailabilityFrameFactory::update($frame, $request->validated());
+
             return response()->json([
                 'message' => 'Availability frame updated successfully',
-                'data' => $frame
+                'data' => new AvailabilityFrameResource($updatedFrame)
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Availability frame not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update availability frame',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 

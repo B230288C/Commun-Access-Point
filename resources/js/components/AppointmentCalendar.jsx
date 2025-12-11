@@ -1,25 +1,104 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import CreateAvailabilityFrameModal from './CreateAvailabilityFrameModal';
+import UpdateAvailabilityFrameModal from './UpdateAvailabilityFrameModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const AppointmentCalendar = () => {
+    const { user } = useAuth();
     const calendarRef = useRef(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [viewMode, setViewMode] = useState('month');
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Events data - will be populated from API/props
-    const [allEvents, setAllEvents] = useState([]);
+    // Frames from API (recurring instances are stored in DB)
+    const [frames, setFrames] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Modal state
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalInitialData, setModalInitialData] = useState(null);
+    // Create modal state
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createModalData, setCreateModalData] = useState(null);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+
+    // Update modal state
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [updateFrameData, setUpdateFrameData] = useState(null);
+
+    // Format date in local timezone (YYYY-MM-DD)
+    const formatLocalDate = useCallback((dateObj) => {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }, []);
+
+    // Transform API frame data to FullCalendar event format
+    const transformFrameToEvent = useCallback((frame) => ({
+        id: `frame-${frame.id}`,
+        title: frame.title || 'Availability',
+        start: `${frame.date}T${frame.start_time}`,
+        end: `${frame.date}T${frame.end_time}`,
+        backgroundColor: frame.status === 'active' ? '#2563EB' : '#6D6D6D',
+        borderColor: frame.status === 'active' ? '#1E4FCC' : '#4A4A4A',
+        extendedProps: {
+            type: 'frame',
+            frameId: frame.id,
+            status: frame.status,
+            duration: frame.duration,
+            interval: frame.interval,
+            is_recurring: frame.is_recurring,
+            repeat_group_id: frame.repeat_group_id,
+            day: frame.day,
+            start_time: frame.start_time,
+            end_time: frame.end_time,
+            staff_id: frame.staff_id,
+        },
+    }), []);
+
+    // Transform all frames to calendar events (recurring instances are in DB)
+    const allEvents = useMemo(() => {
+        return frames.map(transformFrameToEvent);
+    }, [frames, transformFrameToEvent]);
+
+    // Fetch frames on component mount
+    useEffect(() => {
+        const fetchFrames = async () => {
+            if (!user?.id) return;
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await fetch(`/api/availability-frames/staff/${user.id}`, {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch availability frames');
+                }
+
+                const data = await response.json();
+                setFrames(data);
+            } catch (err) {
+                setError(err.message);
+                console.error('Error fetching frames:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFrames();
+    }, [user?.id]);
 
     // Filter events based on search term and status
     const filteredEvents = useMemo(() => {
@@ -160,7 +239,7 @@ const AppointmentCalendar = () => {
         const { start, end, jsEvent } = selectInfo;
 
         // Format date and times
-        const date = start.toISOString().split('T')[0];
+        const date = formatLocalDate(start);
         const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
         const endTime = end.toTimeString().split(' ')[0].substring(0, 5);
         const day = start.toLocaleDateString('en-US', { weekday: 'long' });
@@ -170,14 +249,14 @@ const AppointmentCalendar = () => {
             setModalPosition(calculateModalPosition(jsEvent));
         }
 
-        // Open modal with pre-filled data
-        setModalInitialData({
+        // Open create modal with pre-filled data
+        setCreateModalData({
             date,
             start_time: startTime,
             end_time: endTime,
             day,
         });
-        setIsModalOpen(true);
+        setIsCreateModalOpen(true);
 
         // Unselect the time range
         const calendarApi = calendarRef.current?.getApi();
@@ -186,84 +265,110 @@ const AppointmentCalendar = () => {
         }
     };
 
-    // Handle event resize (staff resizes existing frame)
+    // Extract frame data from calendar event for update modal
+    const extractFrameDataFromEvent = (event) => {
+        const props = event.extendedProps;
+        const frameId = props.frameId || event.id.replace('frame-', '').split('-')[0];
+
+        // Find the original frame from our frames array
+        const originalFrame = frames.find(f => String(f.id) === String(frameId));
+
+        return {
+            id: frameId,
+            title: event.title,
+            date: originalFrame?.date || props.originalDate || formatLocalDate(event.start),
+            day: props.day || event.start.toLocaleDateString('en-US', { weekday: 'long' }),
+            start_time: props.start_time || event.start.toTimeString().split(' ')[0].substring(0, 5),
+            end_time: props.end_time || event.end?.toTimeString().split(' ')[0].substring(0, 5),
+            duration: props.duration,
+            interval: props.interval,
+            is_recurring: props.is_recurring || false,
+            status: props.status,
+            staff_id: props.staff_id,
+        };
+    };
+
+    // Handle event click (open update modal)
+    const handleEventClick = (clickInfo) => {
+        const { event, jsEvent } = clickInfo;
+
+        // Calculate position
+        if (jsEvent) {
+            setModalPosition(calculateModalPosition(jsEvent));
+        }
+
+        // Extract frame data and open update modal
+        const frameData = extractFrameDataFromEvent(event);
+        setUpdateFrameData(frameData);
+        setIsUpdateModalOpen(true);
+    };
+
+    // Handle event resize - revert and open update modal
     const handleEventResize = (resizeInfo) => {
-        const { event, jsEvent } = resizeInfo;
-        const { start, end } = event;
+        const { event, jsEvent, revert } = resizeInfo;
 
-        // Format date and times
-        const date = start.toISOString().split('T')[0];
-        const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
-        const endTime = end.toTimeString().split(' ')[0].substring(0, 5);
-        const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+        // Revert the resize - we don't allow resizing, just opening update modal
+        revert();
 
         // Calculate position
         if (jsEvent) {
             setModalPosition(calculateModalPosition(jsEvent));
         }
 
-        // Open modal with resized data
-        setModalInitialData({
-            date,
-            start_time: startTime,
-            end_time: endTime,
-            day,
-            title: event.title || '',
-            eventId: event.id,
-        });
-        setIsModalOpen(true);
-
-        // Keep the resized event visible (don't revert)
+        // Extract frame data and open update modal
+        const frameData = extractFrameDataFromEvent(event);
+        setUpdateFrameData(frameData);
+        setIsUpdateModalOpen(true);
     };
 
-    // Handle event drop (staff drags existing frame to new time)
+    // Handle event drop - revert and open update modal
     const handleEventDrop = (dropInfo) => {
-        const { event, jsEvent } = dropInfo;
-        const { start, end } = event;
+        const { event, jsEvent, revert } = dropInfo;
 
-        // Format date and times
-        const date = start.toISOString().split('T')[0];
-        const startTime = start.toTimeString().split(' ')[0].substring(0, 5);
-        const endTime = end ? end.toTimeString().split(' ')[0].substring(0, 5) : '';
-        const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+        // Revert the drop - we don't allow dragging, just opening update modal
+        revert();
 
         // Calculate position
         if (jsEvent) {
             setModalPosition(calculateModalPosition(jsEvent));
         }
 
-        // Open modal with dropped data
-        setModalInitialData({
-            date,
-            start_time: startTime,
-            end_time: endTime,
-            day,
-            title: event.title || '',
-            eventId: event.id,
-        });
-        setIsModalOpen(true);
-
-        // Keep the dropped event visible (don't revert)
+        // Extract frame data and open update modal
+        const frameData = extractFrameDataFromEvent(event);
+        setUpdateFrameData(frameData);
+        setIsUpdateModalOpen(true);
     };
 
-    // Handle successful frame creation
-    const handleFrameCreated = (newFrame) => {
-        // Add the new frame to the calendar events
-        setAllEvents(prev => [
-            ...prev,
-            {
-                id: newFrame.id,
-                title: newFrame.title,
-                start: `${newFrame.date}T${newFrame.start_time}`,
-                end: `${newFrame.date}T${newFrame.end_time}`,
-                extendedProps: {
-                    status: newFrame.status,
-                    duration: newFrame.duration,
-                    interval: newFrame.interval,
-                    is_recurring: newFrame.is_recurring,
+    // Refetch all frames from API
+    const refetchFrames = async () => {
+        if (!user?.id) return;
+
+        try {
+            const response = await fetch(`/api/availability-frames/staff/${user.id}`, {
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 },
-            },
-        ]);
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setFrames(data);
+            }
+        } catch (err) {
+            console.error('Error refetching frames:', err);
+        }
+    };
+
+    // Handle successful frame creation - refetch to get all recurring instances
+    const handleFrameCreated = () => {
+        refetchFrames();
+    };
+
+    // Handle successful frame update - refetch to get updated recurring instances
+    const handleFrameUpdated = () => {
+        refetchFrames();
     };
 
     return (
@@ -430,7 +535,26 @@ const AppointmentCalendar = () => {
 
             {/* Calendar Content */}
             <div className="calendar-content bg-white rounded-xl border border-[#E0E0E0] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] overflow-hidden p-4">
-                <FullCalendar
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB]"></div>
+                        <span className="ml-3 text-[#6D6D6D]">Loading availability...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                    <div className="flex items-center justify-center py-12 text-red-600">
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Calendar */}
+                {!loading && <FullCalendar
                     ref={calendarRef}
                     plugins={[
                         dayGridPlugin,
@@ -469,22 +593,29 @@ const AppointmentCalendar = () => {
                     select={handleSelect}
                     eventResize={handleEventResize}
                     eventDrop={handleEventDrop}
-                    eventClick={(info) => {
-                        alert(`Event: ${info.event.title}\nStatus: ${info.event.extendedProps.status}`);
-                    }}
+                    eventClick={handleEventClick}
                     datesSet={(dateInfo) => {
                         setCurrentDate(dateInfo.start);
                     }}
-                />
+                />}
             </div>
             </div>
 
             {/* Create Availability Frame Floating Panel */}
             <CreateAvailabilityFrameModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                initialData={modalInitialData}
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                initialData={createModalData}
                 onSuccess={handleFrameCreated}
+                position={modalPosition}
+            />
+
+            {/* Update Availability Frame Floating Panel */}
+            <UpdateAvailabilityFrameModal
+                isOpen={isUpdateModalOpen}
+                onClose={() => setIsUpdateModalOpen(false)}
+                frameData={updateFrameData}
+                onSuccess={handleFrameUpdated}
                 position={modalPosition}
             />
         </div>

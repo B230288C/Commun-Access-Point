@@ -109,7 +109,6 @@ export default function CreateAvailabilityFrameModal({ isOpen, onClose, initialD
 
                     {/* Date and Time Display (Read-only) */}
                     <div className="form-section">
-                        <h3 className="form-section-title">Selected Time Slot</h3>
                         <div className="time-slot-display">
                             <div className="time-slot-item">
                                 <i className="fas fa-calendar"></i>

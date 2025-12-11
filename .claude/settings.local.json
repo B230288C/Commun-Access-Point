@@ -16,7 +16,8 @@
       "Bash(dir /b \"D:\\communEdTech\\Commun-Access-Point\\resources\\js\\components\")",
       "Bash(dir:*)",
       "WebFetch(domain:fullcalendar.io)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(npx vite build:*)"
     ],
     "deny": [],
     "ask": []
