@@ -407,6 +407,46 @@ const AppointmentCalendar = () => {
         refetchFrames();
     };
 
+    // Restrict selection to single day (disallow spanning across midnight)
+    const handleSelectAllow = useCallback((selectInfo) => {
+        const startDate = selectInfo.start.toDateString();
+        const endDate = selectInfo.end.toDateString();
+
+        // If end is exactly midnight of next day, check if it's a same-day selection
+        const endTime = selectInfo.end.getHours() + selectInfo.end.getMinutes();
+        if (endTime === 0) {
+            // End is at midnight - check if it's the day after start
+            const dayAfterStart = new Date(selectInfo.start);
+            dayAfterStart.setDate(dayAfterStart.getDate() + 1);
+            if (selectInfo.end.toDateString() === dayAfterStart.toDateString()) {
+                return true; // Allow selection ending at midnight of next day
+            }
+        }
+
+        // Disallow if selection spans across different days
+        return startDate === endDate;
+    }, []);
+
+    // Restrict event drop/resize to single day (disallow spanning across days)
+    const handleEventAllow = useCallback((dropInfo, draggedEvent) => {
+        const startDate = dropInfo.start.toDateString();
+        const endDate = dropInfo.end.toDateString();
+
+        // If end is exactly midnight of next day, check if it's a same-day event
+        const endTime = dropInfo.end.getHours() + dropInfo.end.getMinutes();
+        if (endTime === 0) {
+            // End is at midnight - check if it's the day after start
+            const dayAfterStart = new Date(dropInfo.start);
+            dayAfterStart.setDate(dayAfterStart.getDate() + 1);
+            if (dropInfo.end.toDateString() === dayAfterStart.toDateString()) {
+                return true; // Allow event ending at midnight of next day
+            }
+        }
+
+        // Disallow if event spans across different days
+        return startDate === endDate;
+    }, []);
+
     return (
         <div className="appointment-calendar-container">
             <div className="appointment-calendar">
@@ -624,6 +664,9 @@ const AppointmentCalendar = () => {
                     eventDurationEditable={true}
                     eventStartEditable={true}
                     eventResourceEditable={false}
+                    // Restrict interactions to single day
+                    selectAllow={handleSelectAllow}
+                    eventAllow={handleEventAllow}
                     // Event handlers
                     dateClick={handleDateClick}
                     select={handleSelect}
