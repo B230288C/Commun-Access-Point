@@ -683,7 +683,7 @@ const AppointmentCalendar = () => {
                     slotMinTime="00:00:00"
                     slotMaxTime="24:00:00"
                     scrollTime="08:00:00" // Default scroll to 8 AM
-                    allDaySlot={true}
+                    allDaySlot={false}
                     eventDurationEditable={true}
                     eventStartEditable={true}
                     eventResourceEditable={false}
