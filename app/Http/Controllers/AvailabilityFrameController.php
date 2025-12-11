@@ -29,12 +29,12 @@ class AvailabilityFrameController extends Controller
     }
 
     /**
-     * 根据 staff_id 获取该员工的所有 frame
+     * 根据 staff_id 获取该员工的所有 frame（含 slots）
      */
     public function getByStaff($staffId): JsonResponse
     {
         $frames = $this->frameRepo->getByStaff($staffId);
-        return response()->json($frames);
+        return response()->json(AvailabilityFrameResource::collection($frames));
     }
 
     /**

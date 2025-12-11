@@ -2,7 +2,9 @@
 
 namespace App\Factories;
 
+use App\Enums\AvailabilitySlotStatus;
 use App\Models\AvailabilityFrame;
+use App\Models\AvailabilitySlot;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +46,9 @@ class AvailabilityFrameFactory
                     'repeat_group_id' => $frame->repeat_group_id,
                 ]);
 
+                // Generate slots for the original frame
+                self::generateSlots($frame);
+
                 // If recurring, create instances for next weeks
                 if ($frame->is_recurring && $repeatGroupId) {
                     self::createRecurringInstances($frame, $repeatGroupId);
@@ -71,12 +76,11 @@ class AvailabilityFrameFactory
     private static function createRecurringInstances(AvailabilityFrame $originalFrame, string $repeatGroupId): void
     {
         $startDate = Carbon::parse($originalFrame->date);
-        $instances = [];
 
         for ($week = 1; $week <= self::RECURRING_WEEKS; $week++) {
             $instanceDate = $startDate->copy()->addWeeks($week);
 
-            $instances[] = [
+            $instance = AvailabilityFrame::create([
                 'staff_id' => $originalFrame->staff_id,
                 'date' => $instanceDate->format('Y-m-d'),
                 'title' => $originalFrame->title,
@@ -88,17 +92,15 @@ class AvailabilityFrameFactory
                 'is_recurring' => true,
                 'repeat_group_id' => $repeatGroupId,
                 'status' => $originalFrame->status,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
+
+            // Generate slots for each recurring instance
+            self::generateSlots($instance);
         }
 
-        // Bulk insert for performance
-        AvailabilityFrame::insert($instances);
-
-        Log::info('Recurring instances created', [
+        Log::info('Recurring instances created with slots', [
             'repeat_group_id' => $repeatGroupId,
-            'count' => count($instances),
+            'count' => self::RECURRING_WEEKS,
         ]);
     }
 
@@ -108,6 +110,8 @@ class AvailabilityFrameFactory
      * - If changing to recurring: creates instances for next 52 weeks
      * - If changing to non-recurring: deletes future instances in the group (keeps past)
      * - Title/other updates only affect the single instance (not all recurring)
+     *
+     * Also regenerates slots when time-related fields change.
      *
      * @param AvailabilityFrame $frame
      * @param array $data
@@ -122,6 +126,9 @@ class AvailabilityFrameFactory
                 $willBeRecurring = $data['is_recurring'] ?? $wasRecurring;
                 $oldRepeatGroupId = $frame->repeat_group_id;
 
+                // Track if time-related fields are changing (for slot regeneration)
+                $needsSlotRegeneration = self::timeFieldsChanged($frame, $data);
+
                 // Case 1: Changing from non-recurring to recurring
                 if (!$wasRecurring && $willBeRecurring) {
                     $repeatGroupId = (string) Str::uuid();
@@ -129,7 +136,12 @@ class AvailabilityFrameFactory
 
                     $frame->update($data);
 
-                    // Create recurring instances
+                    // Regenerate slots for this frame if time fields changed
+                    if ($needsSlotRegeneration) {
+                        self::regenerateSlots($frame);
+                    }
+
+                    // Create recurring instances (includes slot generation)
                     self::createRecurringInstances($frame, $repeatGroupId);
 
                     Log::info('Frame changed to recurring, instances created', [
@@ -165,11 +177,21 @@ class AvailabilityFrameFactory
 
                     $data['repeat_group_id'] = null;
                     $frame->update($data);
+
+                    // Regenerate slots if time fields changed
+                    if ($needsSlotRegeneration) {
+                        self::regenerateSlots($frame);
+                    }
                 }
                 // Case 3: Still recurring - only update this single instance
                 elseif ($wasRecurring && $willBeRecurring) {
                     // Only update this specific frame, not all instances
                     $frame->update($data);
+
+                    // Regenerate slots if time fields changed
+                    if ($needsSlotRegeneration) {
+                        self::regenerateSlots($frame);
+                    }
 
                     Log::info('Updated single recurring instance', [
                         'frame_id' => $frame->id,
@@ -179,6 +201,11 @@ class AvailabilityFrameFactory
                 // Case 4: Not recurring, just update normally
                 else {
                     $frame->update($data);
+
+                    // Regenerate slots if time fields changed
+                    if ($needsSlotRegeneration) {
+                        self::regenerateSlots($frame);
+                    }
                 }
 
                 Log::info('Availability frame updated successfully', [
@@ -186,6 +213,7 @@ class AvailabilityFrameFactory
                     'staff_id' => $frame->staff_id,
                     'was_recurring' => $wasRecurring,
                     'is_recurring' => $willBeRecurring,
+                    'slots_regenerated' => $needsSlotRegeneration,
                 ]);
 
                 return $frame->fresh();
@@ -198,6 +226,26 @@ class AvailabilityFrameFactory
 
             throw $e;
         }
+    }
+
+    /**
+     * Check if time-related fields are changing.
+     *
+     * @param AvailabilityFrame $frame
+     * @param array $data
+     * @return bool
+     */
+    private static function timeFieldsChanged(AvailabilityFrame $frame, array $data): bool
+    {
+        $timeFields = ['start_time', 'end_time', 'duration', 'interval', 'date'];
+
+        foreach ($timeFields as $field) {
+            if (isset($data[$field]) && $data[$field] != $frame->{$field}) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -258,5 +306,81 @@ class AvailabilityFrameFactory
 
             throw $e;
         }
+    }
+
+    /**
+     * Generate availability slots for a frame based on its duration and interval.
+     *
+     * Slots are generated from start_time to end_time using:
+     * - duration: length of each slot in minutes
+     * - interval: gap between slots in minutes
+     *
+     * Example: Frame 09:00-14:00, duration=20, interval=10
+     * Generates: 09:00-09:20, 09:30-09:50, 10:00-10:20, ...
+     *
+     * @param AvailabilityFrame $frame
+     * @return void
+     */
+    public static function generateSlots(AvailabilityFrame $frame): void
+    {
+        $startTime = Carbon::parse($frame->start_time);
+        $endTime = Carbon::parse($frame->end_time);
+
+        $duration = (int) $frame->duration;
+        $interval = (int) $frame->interval;
+
+        $slots = [];
+        $slotCount = 0;
+        $currentStart = $startTime->copy();
+
+        while ($currentStart->copy()->addMinutes($duration)->lte($endTime)) {
+            $slotEnd = $currentStart->copy()->addMinutes($duration);
+
+            $slots[] = [
+                'availability_frame_id' => $frame->id,
+                'start_time' => $currentStart->format('H:i:s'),
+                'end_time' => $slotEnd->format('H:i:s'),
+                'status' => AvailabilitySlotStatus::Available->value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $slotCount++;
+
+            // Move to next slot: current end + interval
+            $currentStart = $slotEnd->addMinutes($interval);
+        }
+
+        // Bulk insert for performance
+        if (!empty($slots)) {
+            AvailabilitySlot::insert($slots);
+
+            Log::info('Slots generated for frame', [
+                'frame_id' => $frame->id,
+                'slot_count' => $slotCount,
+            ]);
+        }
+    }
+
+    /**
+     * Regenerate slots for a frame.
+     * Deletes existing slots (without appointments) and creates new ones.
+     *
+     * @param AvailabilityFrame $frame
+     * @return void
+     */
+    public static function regenerateSlots(AvailabilityFrame $frame): void
+    {
+        // Delete existing slots that don't have appointments
+        AvailabilitySlot::where('availability_frame_id', $frame->id)
+            ->whereDoesntHave('appointment')
+            ->delete();
+
+        // Generate new slots
+        self::generateSlots($frame);
+
+        Log::info('Slots regenerated for frame', [
+            'frame_id' => $frame->id,
+        ]);
     }
 }

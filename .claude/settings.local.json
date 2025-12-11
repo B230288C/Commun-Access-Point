@@ -17,7 +17,9 @@
       "Bash(dir:*)",
       "WebFetch(domain:fullcalendar.io)",
       "Bash(php artisan:*)",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "Bash(php -l:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

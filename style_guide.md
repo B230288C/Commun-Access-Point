@@ -77,13 +77,38 @@ must follow these standardized state transformations.
 ## 7. Components
 - Corner Radius: 8px
 
-### Frame
-- Height and width: fix into left side of calendar slot,width about 26px, height depend on setting
-- Default: Primary
+### Frame (Calendar Event - Left 1/5)
+- Width: 20% of calendar cell (left side)
+- Height: Matches event duration
+- Border Radius: 4px left corners only
+- Active State:
+  - Background: #2563EB (Primary)
+  - Hover: #1E4FCC
+  - Active: #1B49B2
+- Inactive State:
+  - Background: #6D6D6D
+  - Hover: #5A5A5A
+  - Active: #4A4A4A
+- Title: White, 12px, vertical text (rotated 180deg)
 
-### Slot
-- Height and width: fix into calendar slot
-- Background: #FFEBB7
+### Slot (Calendar Event - Right 4/5)
+- Width: 80% of calendar cell (right side)
+- Height: Matches slot duration
+- Border Radius: 4px right corners only
+- Border Left: 1px solid #E0E0E0
+- Available State:
+  - Background: #FFEBB7
+  - Hover: #FFE49A
+  - Active: #FFD970
+- Booked State:
+  - Background: #D1FAE5
+  - Hover: #A7F3D0
+  - Active: #6EE7B7
+- Blocked State:
+  - Background: #FEE2E2
+  - Hover: #FECACA
+  - Active: #FCA5A5
+- Time Text: #1F1F1F, 12px
 
 ## 8. Spacing Scale
 Use a consistent spacing scale for padding, margin, and gap:

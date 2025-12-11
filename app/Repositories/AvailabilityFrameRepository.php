@@ -15,11 +15,12 @@ class AvailabilityFrameRepository
     }
 
     /**
-     * 根据 staff_id 获取该员工的所有 frame
+     * 根据 staff_id 获取该员工的所有 frame（含 slots）
      */
     public function getByStaff(int $staffId)
     {
-        return AvailabilityFrame::where('staff_id', $staffId)
+        return AvailabilityFrame::with('availabilitySlots')
+            ->where('staff_id', $staffId)
             ->orderBy('date', 'asc')
             ->get();
     }
