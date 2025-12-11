@@ -375,6 +375,15 @@
     cursor: pointer !important;
 }
 
+/* Popover event text color - black on white background */
+.fc .fc-popover .fc-event-title {
+    color: #1F1F1F !important;
+}
+
+.fc .fc-popover .fc-event-time {
+    color: #1F1F1F !important;
+}
+
 /* Now indicator (current time line in week/day view) */
 .fc .fc-timegrid-now-indicator-line {
     border-color: #2563EB !important;
