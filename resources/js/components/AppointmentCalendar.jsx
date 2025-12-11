@@ -47,6 +47,7 @@ const AppointmentCalendar = () => {
         backgroundColor: frame.status === 'active' ? '#2563EB' : '#6D6D6D',
         borderColor: frame.status === 'active' ? '#1E4FCC' : '#4A4A4A',
         classNames: ['event-frame'],
+        displayEventTime: false, // Hide time display for frame events
         extendedProps: {
             type: 'frame',
             frameId: frame.id,

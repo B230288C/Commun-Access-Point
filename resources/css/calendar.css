@@ -171,6 +171,11 @@
     margin-bottom: 2px !important;
 }
 
+/* Hide time for frame events */
+.fc-timegrid-event.event-frame .fc-event-time {
+    display: none !important;
+}
+
 /* Multi-month year view - Compact and proportional */
 .fc-multimonth {
     border-color: #E0E0E0 !important;

@@ -326,6 +326,30 @@
     z-index: 1 !important;
 }
 
+/* Hide time display in frame events */
+.fc .event-frame .fc-event-time {
+    display: none !important;
+}
+
+/* Frame event main container: vertical text centered */
+.fc .event-frame .fc-event-main {
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+    transform: rotate(180deg) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Center the title text inside the main container */
+.fc .event-frame .fc-event-title {
+    text-align: center !important;
+}
+
 /* Slot events: Pushed to right side, 80% width, higher z-index */
 .fc .event-slot {
     left: 20% !important;
@@ -340,11 +364,17 @@
     inset-inline-end: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    pointer-events: none !important;
 }
 
 .fc-timegrid-event-harness-inset {
     inset-inline-start: 0 !important;
     inset-inline-end: 0 !important;
+}
+
+/* Re-enable pointer events on actual event elements */
+.fc-timegrid-event-harness .fc-event {
+    pointer-events: auto !important;
 }
 
 /* Remove default margins that affect positioning */
