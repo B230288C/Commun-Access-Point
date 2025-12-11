@@ -326,6 +326,12 @@
     inset-inline-start: 0 !important;
     width: 20% !important;
     z-index: 1 !important;
+    /* Add horizontal spacing (gutter) on the right side only */
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    border-left: 3px solid transparent !important;
+    border-right: 3px solid transparent !important;
+    background-clip: padding-box !important;
 }
 
 /* Hide time display in frame events (Time Grid only) */
@@ -362,6 +368,12 @@
     inset-inline-start: 20% !important;
     width: 80% !important;
     z-index: 2 !important;
+    /* Add horizontal spacing (gutter) on the left side only */
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    border-right: 3px solid transparent !important;
+    border-left: 3px solid transparent !important;
+    background-clip: padding-box !important;
 }
 
 /* Ensure event harness doesn't restrict positioning (Time Grid only) */
