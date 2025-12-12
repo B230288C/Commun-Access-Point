@@ -552,6 +552,22 @@ const AppointmentCalendar = () => {
         return startDate === endDate;
     }, []);
 
+    // Overlap prevention callback - block only same-type overlaps
+    // Allows: Frame overlapping with Slot (they display in different columns)
+    // Blocks: Frame overlapping with Frame, Slot overlapping with Slot
+    const handleEventOverlap = useCallback((stillEvent, movingEvent) => {
+        const stillType = stillEvent.extendedProps?.type;
+        const movingType = movingEvent?.extendedProps?.type;
+
+        // If both events are the same type, block the overlap
+        if (stillType === movingType) {
+            return false; // Block overlap
+        }
+
+        // Different types can overlap (Frame + Slot is allowed)
+        return true;
+    }, []);
+
     return (
         <div className="appointment-calendar-container">
             <div className="appointment-calendar">
@@ -753,7 +769,7 @@ const AppointmentCalendar = () => {
                     selectMirror={true}
                     dayMaxEvents={3} // Show max 3 events, then "+n more"
                     weekends={true}
-                    eventOverlap={true}
+                    eventOverlap={handleEventOverlap}
                     // Drag configuration
                     dragScroll={true}
                     dragRevertDuration={500}

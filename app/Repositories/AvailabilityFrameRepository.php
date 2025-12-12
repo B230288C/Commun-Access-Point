@@ -67,4 +67,53 @@ class AvailabilityFrameRepository
     {
         return AvailabilityFrame::where('repeat_group_id', $repeatGroupId)->delete();
     }
+
+    /**
+     * Check if a frame overlaps with existing frames for the same staff on the same date.
+     * Uses strict inequalities to allow abutting events: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart)
+     *
+     * @param int $staffId
+     * @param string $date
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeFrameId Frame ID to exclude (for updates)
+     * @return bool True if overlap exists
+     */
+    public function hasOverlap(int $staffId, string $date, string $startTime, string $endTime, ?int $excludeFrameId = null): bool
+    {
+        $query = AvailabilityFrame::where('staff_id', $staffId)
+            ->where('date', $date)
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime);
+
+        if ($excludeFrameId !== null) {
+            $query->where('id', '!=', $excludeFrameId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Get overlapping frames for error reporting.
+     *
+     * @param int $staffId
+     * @param string $date
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeFrameId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getOverlappingFrames(int $staffId, string $date, string $startTime, string $endTime, ?int $excludeFrameId = null)
+    {
+        $query = AvailabilityFrame::where('staff_id', $staffId)
+            ->where('date', $date)
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime);
+
+        if ($excludeFrameId !== null) {
+            $query->where('id', '!=', $excludeFrameId);
+        }
+
+        return $query->get();
+    }
 }

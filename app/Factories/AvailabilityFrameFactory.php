@@ -3,6 +3,7 @@
 namespace App\Factories;
 
 use App\Enums\AvailabilitySlotStatus;
+use App\Exceptions\FrameOverlapException;
 use App\Models\AvailabilityFrame;
 use App\Models\AvailabilitySlot;
 use Carbon\Carbon;
@@ -23,12 +24,23 @@ class AvailabilityFrameFactory
      *
      * @param array $data
      * @return AvailabilityFrame
+     * @throws FrameOverlapException
      * @throws \Exception
      */
     public static function create(array $data): AvailabilityFrame
     {
         try {
             return DB::transaction(function () use ($data) {
+                // Check for overlaps before creating
+                if (!empty($data['date'])) {
+                    self::validateNoOverlap(
+                        $data['staff_id'],
+                        $data['date'],
+                        $data['start_time'],
+                        $data['end_time']
+                    );
+                }
+
                 // Generate repeat_group_id if recurring
                 $repeatGroupId = null;
                 if (!empty($data['is_recurring'])) {
@@ -56,6 +68,8 @@ class AvailabilityFrameFactory
 
                 return $frame;
             });
+        } catch (FrameOverlapException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to create availability frame', [
                 'error' => $e->getMessage(),
@@ -393,6 +407,7 @@ class AvailabilityFrameFactory
      * @param int $deltaMinutes Time difference in minutes (positive or negative)
      * @param string|null $newDate New date for the frame (Y-m-d format)
      * @return AvailabilityFrame
+     * @throws FrameOverlapException
      * @throws \Exception
      */
     public static function move(AvailabilityFrame $frame, int $deltaMinutes, ?string $newDate = null): AvailabilityFrame
@@ -405,6 +420,18 @@ class AvailabilityFrameFactory
 
                 $newFrameStart = $frameStart->copy()->addMinutes($deltaMinutes);
                 $newFrameEnd = $frameEnd->copy()->addMinutes($deltaMinutes);
+
+                // Determine the target date
+                $targetDate = $newDate ?? $frame->date;
+
+                // Validate no overlap at the new position (exclude current frame)
+                self::validateNoOverlap(
+                    $frame->staff_id,
+                    $targetDate,
+                    $newFrameStart->format('H:i:s'),
+                    $newFrameEnd->format('H:i:s'),
+                    $frame->id
+                );
 
                 // Prepare update data for frame
                 $frameUpdateData = [
@@ -443,6 +470,8 @@ class AvailabilityFrameFactory
 
                 return $frame->fresh()->load('availabilitySlots');
             });
+        } catch (FrameOverlapException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to move availability frame', [
                 'frame_id' => $frame->id,
@@ -451,6 +480,42 @@ class AvailabilityFrameFactory
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Validate that a frame does not overlap with existing frames.
+     * Uses strict inequalities: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart)
+     *
+     * @param int $staffId
+     * @param string $date
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeFrameId Frame ID to exclude (for updates/moves)
+     * @throws FrameOverlapException
+     */
+    private static function validateNoOverlap(int $staffId, string $date, string $startTime, string $endTime, ?int $excludeFrameId = null): void
+    {
+        $query = AvailabilityFrame::where('staff_id', $staffId)
+            ->where('date', $date)
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime);
+
+        if ($excludeFrameId !== null) {
+            $query->where('id', '!=', $excludeFrameId);
+        }
+
+        $overlappingFrames = $query->get();
+
+        if ($overlappingFrames->isNotEmpty()) {
+            $frameInfo = $overlappingFrames->map(function ($frame) {
+                return "{$frame->title} ({$frame->start_time} - {$frame->end_time})";
+            })->implode(', ');
+
+            throw new FrameOverlapException(
+                "Frame overlaps with existing frames: {$frameInfo}",
+                $overlappingFrames->toArray()
+            );
         }
     }
 }

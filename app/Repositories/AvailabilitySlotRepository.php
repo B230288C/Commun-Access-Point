@@ -61,4 +61,49 @@ class AvailabilitySlotRepository
         $slot->update(['status' => $status]);
         return $slot;
     }
+
+    /**
+     * Check if a slot overlaps with existing slots within the same frame.
+     * Uses strict inequalities to allow abutting events: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart)
+     *
+     * @param int $frameId
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeSlotId Slot ID to exclude (for updates)
+     * @return bool True if overlap exists
+     */
+    public function hasOverlap(int $frameId, string $startTime, string $endTime, ?int $excludeSlotId = null): bool
+    {
+        $query = AvailabilitySlot::where('availability_frame_id', $frameId)
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime);
+
+        if ($excludeSlotId !== null) {
+            $query->where('id', '!=', $excludeSlotId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Get overlapping slots for error reporting.
+     *
+     * @param int $frameId
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeSlotId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getOverlappingSlots(int $frameId, string $startTime, string $endTime, ?int $excludeSlotId = null)
+    {
+        $query = AvailabilitySlot::where('availability_frame_id', $frameId)
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime);
+
+        if ($excludeSlotId !== null) {
+            $query->where('id', '!=', $excludeSlotId);
+        }
+
+        return $query->get();
+    }
 }

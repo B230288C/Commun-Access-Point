@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\FrameOverlapException;
 use App\Factories\AvailabilityFrameFactory;
 use App\Http\Requests\AvailabilityFrameRequest;
 use App\Http\Requests\CreateAvailabilityFrameRequest;
@@ -63,6 +64,11 @@ class AvailabilityFrameController extends Controller
                 'message' => 'Availability frame created successfully',
                 'data' => new AvailabilityFrameResource($frame),
             ], 201);
+        } catch (FrameOverlapException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'overlap',
+            ], 409); // 409 Conflict
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to create availability frame',
@@ -142,6 +148,11 @@ class AvailabilityFrameController extends Controller
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Availability frame not found'], 404);
+        } catch (FrameOverlapException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'overlap',
+            ], 409); // 409 Conflict
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to move availability frame',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\SlotOverlapException;
 use App\Http\Requests\StoreAvailabilitySlotRequest;
 use App\Http\Requests\UpdateAvailabilitySlotRequest;
 use App\Repositories\AvailabilitySlotRepository;
@@ -31,6 +32,18 @@ class AvailabilitySlotController extends Controller
     public function store(StoreAvailabilitySlotRequest $request): JsonResponse
     {
         $data = $request->validated();
+
+        // Check for overlaps before creating
+        if ($this->slotRepo->hasOverlap($data['availability_frame_id'], $data['start_time'], $data['end_time'])) {
+            $overlapping = $this->slotRepo->getOverlappingSlots($data['availability_frame_id'], $data['start_time'], $data['end_time']);
+            $slotInfo = $overlapping->map(fn($s) => "{$s->start_time} - {$s->end_time}")->implode(', ');
+
+            return response()->json([
+                'message' => "Slot overlaps with existing slots: {$slotInfo}",
+                'error' => 'overlap',
+            ], 409);
+        }
+
         $slot = $this->slotRepo->create($data);
         return response()->json($slot, 201);
     }
@@ -50,6 +63,24 @@ class AvailabilitySlotController extends Controller
     public function update(UpdateAvailabilitySlotRequest $request, int $id): JsonResponse
     {
         $data = $request->validated();
+        $existingSlot = $this->slotRepo->findOrFail($id);
+
+        // Check for overlaps if time is being changed
+        if (isset($data['start_time']) || isset($data['end_time'])) {
+            $startTime = $data['start_time'] ?? $existingSlot->start_time;
+            $endTime = $data['end_time'] ?? $existingSlot->end_time;
+
+            if ($this->slotRepo->hasOverlap($existingSlot->availability_frame_id, $startTime, $endTime, $id)) {
+                $overlapping = $this->slotRepo->getOverlappingSlots($existingSlot->availability_frame_id, $startTime, $endTime, $id);
+                $slotInfo = $overlapping->map(fn($s) => "{$s->start_time} - {$s->end_time}")->implode(', ');
+
+                return response()->json([
+                    'message' => "Slot overlaps with existing slots: {$slotInfo}",
+                    'error' => 'overlap',
+                ], 409);
+            }
+        }
+
         $slot = $this->slotRepo->update($id, $data);
         return response()->json($slot);
     }
