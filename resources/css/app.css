@@ -545,3 +545,18 @@
     @apply bg-amber-50 border border-amber-200 rounded-lg;
     @apply text-sm text-amber-800;
 }
+
+/* ========================================
+   Dimmed Slot Styling (for inactive frames)
+   ======================================== */
+
+.slot-dimmed {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Ensure dimmed slots don't respond to hover */
+.slot-dimmed:hover {
+    opacity: 0.5 !important;
+}

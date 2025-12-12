@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AvailabilityFrameController;
+use App\Http\Controllers\AvailabilitySlotController;
 
 // ==========================
 // Appointment Routes
@@ -48,4 +49,24 @@ Route::prefix('availability-frames')->middleware('auth')->group(function () {
 
     // 批量删除同组 recurring frame
     Route::delete('/repeat-group/{repeatGroupId}', [AvailabilityFrameController::class, 'deleteByRepeatGroup']);
+});
+
+// ==========================
+// Availability Slot Routes
+// ==========================
+Route::prefix('availability-slots')->middleware('auth')->group(function () {
+    // Get all slots
+    Route::get('/', [AvailabilitySlotController::class, 'index']);
+
+    // Get single slot
+    Route::get('/{id}', [AvailabilitySlotController::class, 'show']);
+
+    // Create new slot
+    Route::post('/', [AvailabilitySlotController::class, 'store']);
+
+    // Update slot
+    Route::put('/{id}', [AvailabilitySlotController::class, 'update']);
+
+    // Delete slot
+    Route::delete('/{id}', [AvailabilitySlotController::class, 'destroy']);
 });

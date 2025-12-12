@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import CreateAvailabilityFrameModal from './CreateAvailabilityFrameModal';
 import UpdateAvailabilityFrameModal from './UpdateAvailabilityFrameModal';
+import UpdateAvailabilitySlotModal from './UpdateAvailabilitySlotModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const AppointmentCalendar = () => {
@@ -29,6 +30,10 @@ const AppointmentCalendar = () => {
     // Update frame modal state
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [updateFrameData, setUpdateFrameData] = useState(null);
+
+    // Update slot modal state
+    const [isUpdateSlotModalOpen, setIsUpdateSlotModalOpen] = useState(false);
+    const [updateSlotData, setUpdateSlotData] = useState(null);
 
     // Format date in local timezone (YYYY-MM-DD)
     const formatLocalDate = useCallback((dateObj) => {
@@ -79,6 +84,14 @@ const AppointmentCalendar = () => {
     // Transform slot data to FullCalendar event format
     const transformSlotToEvent = useCallback((slot, frame) => {
         const colors = getSlotColors(slot.status);
+        const isFrameInactive = frame.status === 'inactive';
+
+        // Build class names array
+        const classNames = ['event-slot'];
+        if (isFrameInactive) {
+            classNames.push('slot-dimmed');
+        }
+
         return {
             id: `slot-${slot.id}`,
             title: '', // No title display for slots
@@ -86,13 +99,14 @@ const AppointmentCalendar = () => {
             end: `${frame.date}T${slot.end_time}`,
             backgroundColor: colors.backgroundColor,
             borderColor: colors.borderColor,
-            classNames: ['event-slot'],
+            classNames: classNames,
             displayEventTime: false, // Hide time display for slots
             extendedProps: {
                 type: 'slot',
                 slotId: slot.id,
                 frameId: frame.id,
                 status: slot.status,
+                frameStatus: frame.status,
                 frameTitle: frame.title,
                 start_time: slot.start_time,
                 end_time: slot.end_time,
@@ -357,25 +371,38 @@ const AppointmentCalendar = () => {
         };
     };
 
-    // Handle event click (open update modal for frames only)
+    // Handle event click (open update modal for frames or slots)
     const handleEventClick = (clickInfo) => {
         const { event, jsEvent } = clickInfo;
-
-        // Only handle frame events, ignore slot clicks
         const eventType = event.extendedProps.type;
-        if (eventType === 'slot') {
-            return;
-        }
 
         // Calculate position
         if (jsEvent) {
             setModalPosition(calculateModalPosition(jsEvent));
         }
 
-        // Open frame update modal
-        const frameData = extractFrameDataFromEvent(event);
-        setUpdateFrameData(frameData);
-        setIsUpdateModalOpen(true);
+        if (eventType === 'slot') {
+            // Check if slot is dimmed (frame is inactive) - don't allow interaction
+            if (event.extendedProps.frameStatus === 'inactive') {
+                return;
+            }
+
+            // Open slot update modal
+            setUpdateSlotData({
+                slotId: event.extendedProps.slotId,
+                frameId: event.extendedProps.frameId,
+                status: event.extendedProps.status,
+                frameTitle: event.extendedProps.frameTitle,
+                start_time: event.extendedProps.start_time,
+                end_time: event.extendedProps.end_time,
+            });
+            setIsUpdateSlotModalOpen(true);
+        } else {
+            // Open frame update modal
+            const frameData = extractFrameDataFromEvent(event);
+            setUpdateFrameData(frameData);
+            setIsUpdateModalOpen(true);
+        }
     };
 
     // Handle event resize - revert and open update modal
@@ -477,6 +504,11 @@ const AppointmentCalendar = () => {
 
     // Handle successful frame update - refetch to get updated recurring instances
     const handleFrameUpdated = () => {
+        refetchFrames();
+    };
+
+    // Handle successful slot update - refetch to get updated data
+    const handleSlotUpdated = () => {
         refetchFrames();
     };
 
@@ -768,6 +800,15 @@ const AppointmentCalendar = () => {
                 onClose={() => setIsUpdateModalOpen(false)}
                 frameData={updateFrameData}
                 onSuccess={handleFrameUpdated}
+                position={modalPosition}
+            />
+
+            {/* Update Availability Slot Floating Panel */}
+            <UpdateAvailabilitySlotModal
+                isOpen={isUpdateSlotModalOpen}
+                onClose={() => setIsUpdateSlotModalOpen(false)}
+                slotData={updateSlotData}
+                onSuccess={handleSlotUpdated}
                 position={modalPosition}
             />
         </div>

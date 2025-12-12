@@ -4,6 +4,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
     const [formData, setFormData] = useState({
         title: '',
         is_recurring: false,
+        status: 'active',
     });
     const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -16,6 +17,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
             setFormData({
                 title: frameData.title || '',
                 is_recurring: frameData.is_recurring || false,
+                status: frameData.status || 'active',
             });
             setShowDeleteConfirm(false);
             setError('');
@@ -42,6 +44,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
                     ...frameData,
                     title: formData.title,
                     is_recurring: formData.is_recurring,
+                    status: formData.status,
                 }),
             });
 
@@ -167,6 +170,30 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
                             required
                             disabled={loading}
                         />
+                    </div>
+
+                    {/* Status Dropdown */}
+                    <div className="form-group">
+                        <label htmlFor="status" className="form-label">
+                            Status <span className="text-required">*</span>
+                        </label>
+                        <select
+                            id="status"
+                            name="status"
+                            value={formData.status}
+                            onChange={handleChange}
+                            className="form-input"
+                            disabled={loading}
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <p className="helper-text">
+                            {formData.status === 'inactive'
+                                ? 'Inactive frames and their slots will appear dimmed and cannot be booked.'
+                                : 'Active frames are available for booking.'
+                            }
+                        </p>
                     </div>
 
                     {/* Recurring Option */}
