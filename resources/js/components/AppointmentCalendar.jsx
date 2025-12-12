@@ -425,18 +425,56 @@ const AppointmentCalendar = () => {
 
     // Handle event drop - move frame and all its slots
     const handleEventDrop = async (dropInfo) => {
-        const { event, oldEvent, revert } = dropInfo;
+        const { event, oldEvent, revert, delta, view } = dropInfo;
 
         // Only handle frame events, ignore slot drops
         const eventType = event.extendedProps.type;
         if (eventType === 'slot') {
             revert();
+            // Restore slot opacity on revert
+            const hiddenSlots = document.querySelectorAll('.event-slot[data-hidden-for-drag="true"]');
+            hiddenSlots.forEach((slotEl) => {
+                slotEl.style.opacity = '1';
+                delete slotEl.dataset.hiddenForDrag;
+            });
             return;
+        }
+
+        // Get frame ID
+        const frameId = event.extendedProps.frameId || event.id.replace('frame-', '');
+        const newStart = event.start;
+        const newEnd = event.end;
+
+        // Step 1: Collision Check - check for overlapping frames
+        if (view?.calendar) {
+            const allCalendarEvents = view.calendar.getEvents();
+            const otherFrames = allCalendarEvents.filter(
+                (e) => e.extendedProps?.type === 'frame' &&
+                       String(e.extendedProps?.frameId) !== String(frameId) &&
+                       e.start.toDateString() === newStart.toDateString() // Same day only
+            );
+
+            // Check collision: (ExistingStart < NewEnd) && (ExistingEnd > NewStart)
+            const hasCollision = otherFrames.some((existingFrame) => {
+                const existingStart = existingFrame.start;
+                const existingEnd = existingFrame.end;
+                return existingStart < newEnd && existingEnd > newStart;
+            });
+
+            if (hasCollision) {
+                revert();
+                // Restore slot opacity on collision
+                const hiddenSlots = document.querySelectorAll('.event-slot[data-hidden-for-drag="true"]');
+                hiddenSlots.forEach((slotEl) => {
+                    slotEl.style.opacity = '1';
+                    delete slotEl.dataset.hiddenForDrag;
+                });
+                return;
+            }
         }
 
         // Calculate time delta in minutes
         const oldStart = oldEvent.start;
-        const newStart = event.start;
         const deltaMinutes = Math.round((newStart - oldStart) / (1000 * 60));
 
         // Get new date if changed
@@ -444,8 +482,28 @@ const AppointmentCalendar = () => {
         const newDate = formatLocalDate(newStart);
         const dateChanged = oldDate !== newDate;
 
-        // Get frame ID
-        const frameId = event.extendedProps.frameId || event.id.replace('frame-', '');
+        // Step 2: Optimistic Move - move slots inside batchRendering
+        if (view?.calendar && delta) {
+            view.calendar.batchRendering(() => {
+                const allCalendarEvents = view.calendar.getEvents();
+                const frameSlots = allCalendarEvents.filter(
+                    (e) => e.extendedProps?.type === 'slot' && String(e.extendedProps?.frameId) === String(frameId)
+                );
+
+                // Move each slot by the same delta (single re-render)
+                frameSlots.forEach((slot) => {
+                    slot.moveStart(delta);
+                    slot.moveEnd(delta);
+                });
+            });
+        }
+
+        // Step 3: Show Slots - restore opacity after move
+        const hiddenSlots = document.querySelectorAll('.event-slot[data-hidden-for-drag="true"]');
+        hiddenSlots.forEach((slotEl) => {
+            slotEl.style.opacity = '1';
+            delete slotEl.dataset.hiddenForDrag;
+        });
 
         try {
             const response = await fetch(`/api/availability-frames/${frameId}/move`, {
@@ -552,20 +610,48 @@ const AppointmentCalendar = () => {
         return startDate === endDate;
     }, []);
 
-    // Overlap prevention callback - block only same-type overlaps
-    // Allows: Frame overlapping with Slot (they display in different columns)
-    // Blocks: Frame overlapping with Frame, Slot overlapping with Slot
-    const handleEventOverlap = useCallback((stillEvent, movingEvent) => {
-        const stillType = stillEvent.extendedProps?.type;
-        const movingType = movingEvent?.extendedProps?.type;
+    // Allow all overlaps during drag - validation happens on drop
+    const handleEventOverlap = useCallback(() => {
+        return true;
+    }, []);
 
-        // If both events are the same type, block the overlap
-        if (stillType === movingType) {
-            return false; // Block overlap
+    // Add data-parent-id attribute to slots for targeted hiding during drag
+    const handleEventDidMount = useCallback((info) => {
+        const { event, el } = info;
+
+        // Only add data-parent-id to slot events
+        if (event.extendedProps?.type === 'slot') {
+            const frameId = event.extendedProps.frameId;
+            if (frameId) {
+                el.setAttribute('data-parent-id', String(frameId));
+            }
+        }
+    }, []);
+
+    // Visual Group Drag - hide linked slots while dragging a Frame
+    const handleEventDragStart = useCallback((info) => {
+        const { event } = info;
+
+        // Only process frame events
+        if (event.extendedProps?.type !== 'frame') {
+            return;
         }
 
-        // Different types can overlap (Frame + Slot is allowed)
-        return true;
+        const frameId = event.extendedProps.frameId || event.id.replace('frame-', '');
+
+        // Hide linked slot elements using data-parent-id attribute (set in eventDidMount)
+        // This targets ONLY slots that belong to the dragged frame
+        const slotsToHide = document.querySelectorAll(`.event-slot[data-parent-id="${frameId}"]`);
+        slotsToHide.forEach((slotEl) => {
+            slotEl.style.opacity = '0';
+            slotEl.dataset.hiddenForDrag = 'true';
+        });
+    }, []);
+
+    // Visual Group Drag Stop - do NOT restore opacity here (causes flash at old position)
+    // Opacity is restored in handleEventDrop after slots are moved
+    const handleEventDragStop = useCallback(() => {
+        // Intentionally empty - opacity restoration moved to handleEventDrop
     }, []);
 
     return (
@@ -794,6 +880,9 @@ const AppointmentCalendar = () => {
                     eventResize={handleEventResize}
                     eventDrop={handleEventDrop}
                     eventClick={handleEventClick}
+                    eventDragStart={handleEventDragStart}
+                    eventDragStop={handleEventDragStop}
+                    eventDidMount={handleEventDidMount}
                     datesSet={(dateInfo) => {
                         setCurrentDate(dateInfo.start);
                     }}

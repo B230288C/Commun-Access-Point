@@ -560,3 +560,36 @@
 .slot-dimmed:hover {
     opacity: 0.5 !important;
 }
+
+/* ========================================
+   Frame Mirror Styling During Drag
+   Force vertical text styling to persist on the drag mirror
+   ======================================== */
+
+.fc-event-mirror.event-frame {
+    writing-mode: vertical-rl !important;
+    transform: rotate(180deg) !important;
+    z-index: 9999 !important;
+    width: 20% !important;
+}
+
+.fc-event-mirror.event-frame .fc-event-main {
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+    transform: rotate(180deg) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+}
+
+.fc-event-mirror.event-frame .fc-event-title {
+    text-align: center !important;
+}
+
+.fc-event-mirror.event-frame .fc-event-time {
+    display: none !important;
+}
