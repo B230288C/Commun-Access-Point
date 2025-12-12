@@ -490,10 +490,28 @@ const AppointmentCalendar = () => {
                     (e) => e.extendedProps?.type === 'slot' && String(e.extendedProps?.frameId) === String(frameId)
                 );
 
-                // Move each slot by the same delta (single re-render)
+                // Move each slot preserving original duration
                 frameSlots.forEach((slot) => {
+                    // 1. Store original duration BEFORE any move
+                    const originalDuration = slot.end.getTime() - slot.start.getTime();
+
+                    // 2. Move only the start time
                     slot.moveStart(delta);
-                    slot.moveEnd(delta);
+
+                    // 3. Force end = start + originalDuration (ignore grid snapping)
+                    const newStart = slot.start;
+                    const newEnd = new Date(newStart.getTime() + originalDuration);
+
+                    // Clamp to midnight only if it overflows
+                    const midnight = new Date(newStart);
+                    midnight.setDate(midnight.getDate() + 1);
+                    midnight.setHours(0, 0, 0, 0);
+
+                    if (newEnd.getTime() > midnight.getTime()) {
+                        slot.setEnd(midnight);
+                    } else {
+                        slot.setEnd(newEnd);
+                    }
                 });
             });
         }
@@ -648,10 +666,17 @@ const AppointmentCalendar = () => {
         });
     }, []);
 
-    // Visual Group Drag Stop - do NOT restore opacity here (causes flash at old position)
-    // Opacity is restored in handleEventDrop after slots are moved
+    // Visual Group Drag Stop - restore opacity as safety net
+    // This handles the case when drop position hasn't changed (eventDrop not fired)
     const handleEventDragStop = useCallback(() => {
-        // Intentionally empty - opacity restoration moved to handleEventDrop
+        // Use setTimeout to let eventDrop fire first if there was a position change
+        setTimeout(() => {
+            const hiddenSlots = document.querySelectorAll('.event-slot[data-hidden-for-drag="true"]');
+            hiddenSlots.forEach((slotEl) => {
+                slotEl.style.opacity = '1';
+                delete slotEl.dataset.hiddenForDrag;
+            });
+        }, 0);
     }, []);
 
     return (
