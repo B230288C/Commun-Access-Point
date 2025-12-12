@@ -63,26 +63,42 @@ const AppointmentCalendar = () => {
         },
     }), []);
 
+    // Get slot colors based on status (from style_guide.md)
+    const getSlotColors = useCallback((status) => {
+        switch (status) {
+            case 'booked':
+                return { backgroundColor: '#D1FAE5', borderColor: '#A7F3D0' };
+            case 'unavailable':
+                return { backgroundColor: '#E5E7EB', borderColor: '#D1D5DB' };
+            case 'available':
+            default:
+                return { backgroundColor: '#FFEBB7', borderColor: '#E0E0E0' };
+        }
+    }, []);
+
     // Transform slot data to FullCalendar event format
-    const transformSlotToEvent = useCallback((slot, frame) => ({
-        id: `slot-${slot.id}`,
-        title: '', // No title display for slots
-        start: `${frame.date}T${slot.start_time}`,
-        end: `${frame.date}T${slot.end_time}`,
-        backgroundColor: '#FFEBB7',
-        borderColor: '#E0E0E0',
-        classNames: ['event-slot'],
-        displayEventTime: false, // Hide time display for slots
-        extendedProps: {
-            type: 'slot',
-            slotId: slot.id,
-            frameId: frame.id,
-            status: slot.status,
-            frameTitle: frame.title,
-            start_time: slot.start_time,
-            end_time: slot.end_time,
-        },
-    }), []);
+    const transformSlotToEvent = useCallback((slot, frame) => {
+        const colors = getSlotColors(slot.status);
+        return {
+            id: `slot-${slot.id}`,
+            title: '', // No title display for slots
+            start: `${frame.date}T${slot.start_time}`,
+            end: `${frame.date}T${slot.end_time}`,
+            backgroundColor: colors.backgroundColor,
+            borderColor: colors.borderColor,
+            classNames: ['event-slot'],
+            displayEventTime: false, // Hide time display for slots
+            extendedProps: {
+                type: 'slot',
+                slotId: slot.id,
+                frameId: frame.id,
+                status: slot.status,
+                frameTitle: frame.title,
+                start_time: slot.start_time,
+                end_time: slot.end_time,
+            },
+        };
+    }, [getSlotColors]);
 
     // Transform all frames and slots to calendar events
     const allEvents = useMemo(() => {

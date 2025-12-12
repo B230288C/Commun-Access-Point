@@ -108,6 +108,10 @@ must follow these standardized state transformations.
   - Background: #FEE2E2
   - Hover: #FECACA
   - Active: #FCA5A5
+- Unavailable State:
+  - Background: #E5E7EB
+  - Hover: #D1D5DB
+  - Active: #9CA3AF
 - Time Text: #1F1F1F, 12px
 
 ## 8. Spacing Scale

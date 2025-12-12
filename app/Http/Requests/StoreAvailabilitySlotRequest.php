@@ -23,7 +23,7 @@ class StoreAvailabilitySlotRequest extends FormRequest
             'availability_frame_id' => 'required|exists:availability_frames,id',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'status' => 'sometimes|in:available,booked',
+            'status' => 'sometimes|in:available,booked,unavailable',
         ];
     }
 

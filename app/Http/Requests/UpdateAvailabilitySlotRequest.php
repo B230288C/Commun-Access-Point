@@ -16,7 +16,7 @@ class UpdateAvailabilitySlotRequest extends FormRequest
         return [
             'start_time' => 'sometimes|date_format:H:i',
             'end_time' => 'sometimes|date_format:H:i|after:start_time',
-            'status' => 'sometimes|in:available,booked'
+            'status' => 'sometimes|in:available,booked,unavailable'
         ];
     }
 
@@ -26,7 +26,7 @@ class UpdateAvailabilitySlotRequest extends FormRequest
             'start_time.date_format' => 'Start time must be in HH:mm format.',
             'end_time.date_format' => 'End time must be in HH:mm format.',
             'end_time.after' => 'End time must be after start time.',
-            'status.in' => 'Status must be either available or booked.',
+            'status.in' => 'Status must be available, booked, or unavailable.',
         ];
     }
 }
