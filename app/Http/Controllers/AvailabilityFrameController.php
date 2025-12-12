@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Factories\AvailabilityFrameFactory;
 use App\Http\Requests\AvailabilityFrameRequest;
 use App\Http\Requests\CreateAvailabilityFrameRequest;
+use App\Http\Requests\MoveAvailabilityFrameRequest;
 use App\Http\Resources\AvailabilityFrameResource;
 use App\Repositories\AvailabilityFrameRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -120,5 +121,32 @@ class AvailabilityFrameController extends Controller
         return response()->json([
             'message' => "Deleted {$count} recurring frames successfully"
         ]);
+    }
+
+    /**
+     * Move a frame and all its slots by a time delta
+     */
+    public function move(MoveAvailabilityFrameRequest $request, $id): JsonResponse
+    {
+        try {
+            $frame = $this->frameRepo->findById($id);
+            $movedFrame = AvailabilityFrameFactory::move(
+                $frame,
+                $request->validated()['delta_minutes'],
+                $request->validated()['new_date'] ?? null
+            );
+
+            return response()->json([
+                'message' => 'Availability frame moved successfully',
+                'data' => new AvailabilityFrameResource($movedFrame),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Availability frame not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to move availability frame',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

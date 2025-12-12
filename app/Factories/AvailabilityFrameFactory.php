@@ -383,4 +383,74 @@ class AvailabilityFrameFactory
             'frame_id' => $frame->id,
         ]);
     }
+
+    /**
+     * Move a frame and all its slots by a time delta.
+     * Updates start_time and end_time for both the frame and all associated slots.
+     * Optionally updates the date if provided.
+     *
+     * @param AvailabilityFrame $frame
+     * @param int $deltaMinutes Time difference in minutes (positive or negative)
+     * @param string|null $newDate New date for the frame (Y-m-d format)
+     * @return AvailabilityFrame
+     * @throws \Exception
+     */
+    public static function move(AvailabilityFrame $frame, int $deltaMinutes, ?string $newDate = null): AvailabilityFrame
+    {
+        try {
+            return DB::transaction(function () use ($frame, $deltaMinutes, $newDate) {
+                // Calculate new frame times
+                $frameStart = Carbon::parse($frame->start_time);
+                $frameEnd = Carbon::parse($frame->end_time);
+
+                $newFrameStart = $frameStart->copy()->addMinutes($deltaMinutes);
+                $newFrameEnd = $frameEnd->copy()->addMinutes($deltaMinutes);
+
+                // Prepare update data for frame
+                $frameUpdateData = [
+                    'start_time' => $newFrameStart->format('H:i:s'),
+                    'end_time' => $newFrameEnd->format('H:i:s'),
+                ];
+
+                // Update date if provided
+                if ($newDate !== null) {
+                    $frameUpdateData['date'] = $newDate;
+                    // Update day name based on new date
+                    $frameUpdateData['day'] = Carbon::parse($newDate)->format('l');
+                }
+
+                $frame->update($frameUpdateData);
+
+                // Update all associated slots with the same delta
+                $slots = AvailabilitySlot::where('availability_frame_id', $frame->id)->get();
+
+                foreach ($slots as $slot) {
+                    $slotStart = Carbon::parse($slot->start_time);
+                    $slotEnd = Carbon::parse($slot->end_time);
+
+                    $slot->update([
+                        'start_time' => $slotStart->addMinutes($deltaMinutes)->format('H:i:s'),
+                        'end_time' => $slotEnd->addMinutes($deltaMinutes)->format('H:i:s'),
+                    ]);
+                }
+
+                Log::info('Frame and slots moved successfully', [
+                    'frame_id' => $frame->id,
+                    'delta_minutes' => $deltaMinutes,
+                    'new_date' => $newDate,
+                    'slots_updated' => $slots->count(),
+                ]);
+
+                return $frame->fresh()->load('availabilitySlots');
+            });
+        } catch (\Exception $e) {
+            Log::error('Failed to move availability frame', [
+                'frame_id' => $frame->id,
+                'delta_minutes' => $deltaMinutes,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
 }

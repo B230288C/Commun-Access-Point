@@ -396,22 +396,56 @@ const AppointmentCalendar = () => {
         setIsUpdateModalOpen(true);
     };
 
-    // Handle event drop - revert and open update modal
-    const handleEventDrop = (dropInfo) => {
-        const { event, jsEvent, revert } = dropInfo;
+    // Handle event drop - move frame and all its slots
+    const handleEventDrop = async (dropInfo) => {
+        const { event, oldEvent, revert } = dropInfo;
 
-        // Revert the drop - we don't allow dragging, just opening update modal
-        revert();
-
-        // Calculate position
-        if (jsEvent) {
-            setModalPosition(calculateModalPosition(jsEvent));
+        // Only handle frame events, ignore slot drops
+        const eventType = event.extendedProps.type;
+        if (eventType === 'slot') {
+            revert();
+            return;
         }
 
-        // Extract frame data and open update modal
-        const frameData = extractFrameDataFromEvent(event);
-        setUpdateFrameData(frameData);
-        setIsUpdateModalOpen(true);
+        // Calculate time delta in minutes
+        const oldStart = oldEvent.start;
+        const newStart = event.start;
+        const deltaMinutes = Math.round((newStart - oldStart) / (1000 * 60));
+
+        // Get new date if changed
+        const oldDate = formatLocalDate(oldStart);
+        const newDate = formatLocalDate(newStart);
+        const dateChanged = oldDate !== newDate;
+
+        // Get frame ID
+        const frameId = event.extendedProps.frameId || event.id.replace('frame-', '');
+
+        try {
+            const response = await fetch(`/api/availability-frames/${frameId}/move`, {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({
+                    delta_minutes: deltaMinutes,
+                    new_date: dateChanged ? newDate : null,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to move frame');
+            }
+
+            // Refetch frames to get updated data
+            refetchFrames();
+        } catch (err) {
+            console.error('Error moving frame:', err);
+            // Revert the drop on error
+            revert();
+        }
     };
 
     // Refetch all frames from API

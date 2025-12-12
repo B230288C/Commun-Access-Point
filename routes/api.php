@@ -40,6 +40,9 @@ Route::prefix('availability-frames')->middleware('auth')->group(function () {
     // 更新 frame
     Route::put('/{id}', [AvailabilityFrameController::class, 'update']);
 
+    // Move frame (drag-and-drop with cascading slots)
+    Route::patch('/{id}/move', [AvailabilityFrameController::class, 'move']);
+
     // 删除单个 frame
     Route::delete('/{id}', [AvailabilityFrameController::class, 'destroy']);
 
