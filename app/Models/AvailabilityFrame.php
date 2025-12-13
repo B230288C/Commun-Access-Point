@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AvailabilityFrameStatus;
+use App\Enums\AvailabilityType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,15 @@ class AvailabilityFrame extends Model
         'is_recurring',
         'repeat_group_id',
         'status',
+        'availability_type',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'availability_type' => AvailabilityType::class,
+        ];
+    }
 
     // 自动生成 repeat_group_id（仅当 is_recurring = true 且 repeat_group_id 为空）
     protected static function boot()

@@ -81,11 +81,15 @@ must follow these standardized state transformations.
 - Width: 20% of calendar cell (left side)
 - Height: Matches event duration
 - Border Radius: 4px left corners only
-- Active State:
+- Public + Active State:
   - Background: #2563EB (Primary)
   - Hover: #1E4FCC
   - Active: #1B49B2
-- Inactive State:
+- Private + Active State:
+  - Background: #F59E0B (Orange/Amber)
+  - Hover: #D97706
+  - Active: #B45309
+- Inactive State (both Public/Private):
   - Background: #6D6D6D
   - Hover: #5A5A5A
   - Active: #4A4A4A

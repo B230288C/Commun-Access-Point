@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\AvailabilityFrameStatus;
+use App\Enums\AvailabilityType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -45,6 +46,7 @@ class CreateAvailabilityFrameRequest extends FormRequest
                 Rule::in(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
             ],
             'status' => ['nullable', 'string', Rule::in([AvailabilityFrameStatus::Active->value, AvailabilityFrameStatus::Inactive->value])],
+            'availability_type' => ['nullable', 'string', Rule::in([AvailabilityType::Public->value, AvailabilityType::Private->value])],
         ];
     }
 
@@ -88,6 +90,7 @@ class CreateAvailabilityFrameRequest extends FormRequest
             'interval' => $this->input('interval', 0),
             'is_recurring' => $this->boolean('is_recurring', false),
             'status' => $this->input('status', AvailabilityFrameStatus::Active->value),
+            'availability_type' => $this->input('availability_type', AvailabilityType::Public->value),
         ]);
     }
 }

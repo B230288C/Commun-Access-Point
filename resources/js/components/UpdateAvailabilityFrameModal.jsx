@@ -5,6 +5,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
         title: '',
         is_recurring: false,
         status: 'active',
+        availability_type: 'public',
     });
     const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -18,6 +19,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
                 title: frameData.title || '',
                 is_recurring: frameData.is_recurring || false,
                 status: frameData.status || 'active',
+                availability_type: frameData.availability_type || 'public',
             });
             setShowDeleteConfirm(false);
             setError('');
@@ -45,6 +47,7 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
                     title: formData.title,
                     is_recurring: formData.is_recurring,
                     status: formData.status,
+                    availability_type: formData.availability_type,
                 }),
             });
 
@@ -192,6 +195,30 @@ export default function UpdateAvailabilityFrameModal({ isOpen, onClose, frameDat
                             {formData.status === 'inactive'
                                 ? 'Inactive frames and their slots will appear dimmed and cannot be booked.'
                                 : 'Active frames are available for booking.'
+                            }
+                        </p>
+                    </div>
+
+                    {/* Availability Type Dropdown */}
+                    <div className="form-group">
+                        <label htmlFor="availability_type" className="form-label">
+                            Visibility
+                        </label>
+                        <select
+                            id="availability_type"
+                            name="availability_type"
+                            value={formData.availability_type}
+                            onChange={handleChange}
+                            className="form-input"
+                            disabled={loading}
+                        >
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
+                        <p className="helper-text">
+                            {formData.availability_type === 'private'
+                                ? 'Private frames are only visible to you and cannot be booked by visitors.'
+                                : 'Public frames are visible and bookable by visitors.'
                             }
                         </p>
                     </div>

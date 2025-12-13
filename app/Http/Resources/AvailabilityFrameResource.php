@@ -27,6 +27,7 @@ class AvailabilityFrameResource extends JsonResource
             'is_recurring' => $this->is_recurring,
             'repeat_group_id' => $this->repeat_group_id,
             'status' => $this->status,
+            'availability_type' => $this->availability_type?->value ?? 'public',
             'slots' => AvailabilitySlotResource::collection($this->whenLoaded('availabilitySlots')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

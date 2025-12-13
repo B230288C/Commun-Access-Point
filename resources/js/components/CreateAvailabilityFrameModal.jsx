@@ -11,6 +11,7 @@ export default function CreateAvailabilityFrameModal({ isOpen, onClose, initialD
         is_recurring: false,
         day: '',
         status: 'active',
+        availability_type: 'public',
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -175,6 +176,30 @@ export default function CreateAvailabilityFrameModal({ isOpen, onClose, initialD
                             />
                             <p className="helper-text">Gap between slots</p>
                         </div>
+                    </div>
+
+                    {/* Availability Type Dropdown */}
+                    <div className="form-group">
+                        <label htmlFor="availability_type" className="form-label">
+                            Visibility
+                        </label>
+                        <select
+                            id="availability_type"
+                            name="availability_type"
+                            value={formData.availability_type}
+                            onChange={handleChange}
+                            className="form-input"
+                            disabled={loading}
+                        >
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
+                        <p className="helper-text">
+                            {formData.availability_type === 'private'
+                                ? 'Private frames are only visible to you and cannot be booked by visitors.'
+                                : 'Public frames are visible and bookable by visitors.'
+                            }
+                        </p>
                     </div>
 
                     {/* Recurring Option */}

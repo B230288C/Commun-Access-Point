@@ -43,30 +43,51 @@ const AppointmentCalendar = () => {
         return `${year}-${month}-${day}`;
     }, []);
 
+    // Get frame colors based on status and availability_type (from style_guide.md)
+    const getFrameColors = useCallback((status, availabilityType) => {
+        // Inactive frames always use grey regardless of availability type
+        if (status === 'inactive') {
+            return { backgroundColor: '#6D6D6D', borderColor: '#4A4A4A' };
+        }
+
+        // Active frames: use Primary for PUBLIC, Orange/Amber for PRIVATE
+        if (availabilityType === 'private') {
+            return { backgroundColor: '#F59E0B', borderColor: '#D97706' };
+        }
+
+        // Default: PUBLIC + Active
+        return { backgroundColor: '#2563EB', borderColor: '#1E4FCC' };
+    }, []);
+
     // Transform API frame data to FullCalendar event format
-    const transformFrameToEvent = useCallback((frame) => ({
-        id: `frame-${frame.id}`,
-        title: frame.title || 'Availability',
-        start: `${frame.date}T${frame.start_time}`,
-        end: `${frame.date}T${frame.end_time}`,
-        backgroundColor: frame.status === 'active' ? '#2563EB' : '#6D6D6D',
-        borderColor: frame.status === 'active' ? '#1E4FCC' : '#4A4A4A',
-        classNames: ['event-frame'],
-        displayEventTime: false, // Hide time display for frame events
-        extendedProps: {
-            type: 'frame',
-            frameId: frame.id,
-            status: frame.status,
-            duration: frame.duration,
-            interval: frame.interval,
-            is_recurring: frame.is_recurring,
-            repeat_group_id: frame.repeat_group_id,
-            day: frame.day,
-            start_time: frame.start_time,
-            end_time: frame.end_time,
-            staff_id: frame.staff_id,
-        },
-    }), []);
+    const transformFrameToEvent = useCallback((frame) => {
+        const colors = getFrameColors(frame.status, frame.availability_type);
+
+        return {
+            id: `frame-${frame.id}`,
+            title: frame.title || 'Availability',
+            start: `${frame.date}T${frame.start_time}`,
+            end: `${frame.date}T${frame.end_time}`,
+            backgroundColor: colors.backgroundColor,
+            borderColor: colors.borderColor,
+            classNames: ['event-frame'],
+            displayEventTime: false, // Hide time display for frame events
+            extendedProps: {
+                type: 'frame',
+                frameId: frame.id,
+                status: frame.status,
+                availability_type: frame.availability_type || 'public',
+                duration: frame.duration,
+                interval: frame.interval,
+                is_recurring: frame.is_recurring,
+                repeat_group_id: frame.repeat_group_id,
+                day: frame.day,
+                start_time: frame.start_time,
+                end_time: frame.end_time,
+                staff_id: frame.staff_id,
+            },
+        };
+    }, [getFrameColors]);
 
     // Get slot colors based on status (from style_guide.md)
     const getSlotColors = useCallback((status) => {
@@ -367,6 +388,7 @@ const AppointmentCalendar = () => {
             interval: props.interval,
             is_recurring: props.is_recurring || false,
             status: props.status,
+            availability_type: props.availability_type || originalFrame?.availability_type || 'public',
             staff_id: props.staff_id,
         };
     };

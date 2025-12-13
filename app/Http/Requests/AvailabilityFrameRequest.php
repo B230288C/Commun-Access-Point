@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AvailabilityType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AvailabilityFrameRequest extends FormRequest
@@ -26,6 +27,7 @@ class AvailabilityFrameRequest extends FormRequest
             'repeat_group_id' => ['nullable', 'uuid'],
             'status' => ['required', 'in:active,inactive'],
             'title' => ['required', 'string', 'max:255'],
+            'availability_type' => ['nullable', 'in:'.AvailabilityType::Public->value.','.AvailabilityType::Private->value],
         ];
     }
 

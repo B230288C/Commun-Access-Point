@@ -106,6 +106,7 @@ class AvailabilityFrameFactory
                 'is_recurring' => true,
                 'repeat_group_id' => $repeatGroupId,
                 'status' => $originalFrame->status,
+                'availability_type' => $originalFrame->availability_type,
             ]);
 
             // Generate slots for each recurring instance
