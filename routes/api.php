@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AvailabilityFrameController;
 use App\Http\Controllers\AvailabilitySlotController;
+use App\Http\Controllers\PublicBookingController;
 
 // ==========================
 // Appointment Routes
@@ -69,4 +70,12 @@ Route::prefix('availability-slots')->middleware('auth')->group(function () {
 
     // Delete slot
     Route::delete('/{id}', [AvailabilitySlotController::class, 'destroy']);
+});
+
+// ==========================
+// Public Booking Routes (No Auth Required)
+// ==========================
+Route::prefix('public')->group(function () {
+    // Get staff availability for booking page
+    Route::get('/staff/{staffId}/availability', [PublicBookingController::class, 'getStaffAvailability']);
 });
