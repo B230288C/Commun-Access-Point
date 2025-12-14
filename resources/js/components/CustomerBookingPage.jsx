@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import BookingModal from './BookingModal';
 
 export default function CustomerBookingPage({ staffId }) {
     const [staffData, setStaffData] = useState(null);
@@ -6,6 +7,7 @@ export default function CustomerBookingPage({ staffId }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchAvailability = async () => {
@@ -71,9 +73,36 @@ export default function CustomerBookingPage({ staffId }) {
         });
     };
 
-    // Handle slot selection
+    // Handle slot selection - opens the booking modal
     const handleSlotClick = (slot, date) => {
         setSelectedSlot({ ...slot, date });
+        setIsModalOpen(true);
+    };
+
+    // Handle modal close
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedSlot(null);
+    };
+
+    // Handle successful booking - remove the booked slot from the list
+    const handleBookingSuccess = () => {
+        if (selectedSlot) {
+            const date = selectedSlot.date;
+            setSlotsByDate(prev => {
+                const updatedSlots = { ...prev };
+                if (updatedSlots[date]) {
+                    updatedSlots[date] = updatedSlots[date].filter(
+                        slot => slot.id !== selectedSlot.id
+                    );
+                    // Remove the date if no slots left
+                    if (updatedSlots[date].length === 0) {
+                        delete updatedSlots[date];
+                    }
+                }
+                return updatedSlots;
+            });
+        }
     };
 
     // Get sorted dates
@@ -169,31 +198,15 @@ export default function CustomerBookingPage({ staffId }) {
                     )}
                 </section>
 
-                {/* Selected Slot Confirmation */}
-                {selectedSlot && (
-                    <div className="booking-confirmation">
-                        <div className="confirmation-content">
-                            <h4>Selected Time</h4>
-                            <p className="selected-datetime">
-                                <i className="fas fa-calendar"></i>
-                                {formatDate(selectedSlot.date)}
-                            </p>
-                            <p className="selected-time">
-                                <i className="fas fa-clock"></i>
-                                {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}
-                            </p>
-                            <button className="btn-confirm" disabled>
-                                Confirm Booking (Coming Soon)
-                            </button>
-                            <button
-                                className="btn-cancel"
-                                onClick={() => setSelectedSlot(null)}
-                            >
-                                Clear Selection
-                            </button>
-                        </div>
-                    </div>
-                )}
+                {/* Booking Modal */}
+                <BookingModal
+                    isOpen={isModalOpen}
+                    onClose={handleModalClose}
+                    slot={selectedSlot}
+                    staffId={staffId}
+                    staffName={staffData?.name}
+                    onSuccess={handleBookingSuccess}
+                />
             </div>
         </div>
     );

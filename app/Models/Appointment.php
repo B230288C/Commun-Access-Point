@@ -13,7 +13,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'visitor_name',
-        'nric_passport',
+        'student_name',
         'phone_number',
         'email',
         'purpose',

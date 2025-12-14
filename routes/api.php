@@ -78,4 +78,7 @@ Route::prefix('availability-slots')->middleware('auth')->group(function () {
 Route::prefix('public')->group(function () {
     // Get staff availability for booking page
     Route::get('/staff/{staffId}/availability', [PublicBookingController::class, 'getStaffAvailability']);
+
+    // Create appointment from public booking page
+    Route::post('/appointments', [PublicBookingController::class, 'store']);
 });

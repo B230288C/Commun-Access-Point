@@ -17,11 +17,10 @@ class StoreAppointmentRequest extends FormRequest
     {
         return [
             'visitor_name'                  => 'required|string|max:255',
-            'nric_passport'                 => 'required|string|max:50',
+            'student_name'                  => 'nullable|string|max:255',
             'phone_number'                  => 'required|string|max:20',
             'email'                         => 'required|email|max:255',
             'purpose'                       => 'required|string',
-            'personal_in_charge'            => 'required|string|max:255',
             'date'                          => 'required|date|after_or_equal:today',
             'start_time'                    => 'required|date_format:H:i',
             'end_time'                      => 'required|date_format:H:i|after:start_time',
@@ -34,12 +33,11 @@ class StoreAppointmentRequest extends FormRequest
     {
         return [
             'visitor_name.required'         => 'Visitor name is required',
-            'nric_passport.required'        => 'NRIC/Passport is required',
+            'student_name.max'              => 'Student name cannot exceed 255 characters',
             'phone_number.required'         => 'Phone number is required',
             'email.required'                => 'Email is required',
             'email.email'                   => 'Email format is invalid',
             'purpose.required'              => 'Purpose is required',
-            'personal_in_charge.required'   => 'Person in charge is required',
             'date.required'                 => 'Appointment date is required',
             'date.after_or_equal'           => 'Appointment date cannot be in the past',
             'start_time.required'           => 'Start time is required',
