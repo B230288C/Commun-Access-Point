@@ -7,6 +7,7 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import CreateAvailabilityFrameModal from './CreateAvailabilityFrameModal';
 import UpdateAvailabilityFrameModal from './UpdateAvailabilityFrameModal';
 import UpdateAvailabilitySlotModal from './UpdateAvailabilitySlotModal';
+import UpdateAppointmentModal from './UpdateAppointmentModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const AppointmentCalendar = () => {
@@ -34,6 +35,10 @@ const AppointmentCalendar = () => {
     // Update slot modal state
     const [isUpdateSlotModalOpen, setIsUpdateSlotModalOpen] = useState(false);
     const [updateSlotData, setUpdateSlotData] = useState(null);
+
+    // Update appointment modal state
+    const [isUpdateAppointmentModalOpen, setIsUpdateAppointmentModalOpen] = useState(false);
+    const [updateAppointmentData, setUpdateAppointmentData] = useState(null);
 
     // Format date in local timezone (YYYY-MM-DD)
     const formatLocalDate = useCallback((dateObj) => {
@@ -106,16 +111,21 @@ const AppointmentCalendar = () => {
     const transformSlotToEvent = useCallback((slot, frame) => {
         const colors = getSlotColors(slot.status);
         const isFrameInactive = frame.status === 'inactive';
+        const isBooked = slot.status === 'booked';
+        const appointment = slot.appointment || null;
 
         // Build class names array
         const classNames = ['event-slot'];
         if (isFrameInactive) {
             classNames.push('slot-dimmed');
         }
+        if (isBooked) {
+            classNames.push('slot-booked');
+        }
 
         return {
             id: `slot-${slot.id}`,
-            title: '', // No title display for slots
+            title: '',
             start: `${frame.date}T${slot.start_time}`,
             end: `${frame.date}T${slot.end_time}`,
             backgroundColor: colors.backgroundColor,
@@ -131,6 +141,7 @@ const AppointmentCalendar = () => {
                 frameTitle: frame.title,
                 start_time: slot.start_time,
                 end_time: slot.end_time,
+                appointment: appointment,
             },
         };
     }, [getSlotColors]);
@@ -409,16 +420,28 @@ const AppointmentCalendar = () => {
                 return;
             }
 
-            // Open slot update modal
-            setUpdateSlotData({
-                slotId: event.extendedProps.slotId,
-                frameId: event.extendedProps.frameId,
-                status: event.extendedProps.status,
-                frameTitle: event.extendedProps.frameTitle,
-                start_time: event.extendedProps.start_time,
-                end_time: event.extendedProps.end_time,
-            });
-            setIsUpdateSlotModalOpen(true);
+            // Check if click was on the appointment element inside the slot
+            const clickedOnAppointment = jsEvent?.target?.closest('.slot-appointment');
+
+            if (clickedOnAppointment && event.extendedProps.appointment) {
+                // Clicked on appointment - open appointment modal
+                setUpdateAppointmentData({
+                    slotId: event.extendedProps.slotId,
+                    appointment: event.extendedProps.appointment,
+                });
+                setIsUpdateAppointmentModalOpen(true);
+            } else {
+                // Clicked on slot area - open slot update modal
+                setUpdateSlotData({
+                    slotId: event.extendedProps.slotId,
+                    frameId: event.extendedProps.frameId,
+                    status: event.extendedProps.status,
+                    frameTitle: event.extendedProps.frameTitle,
+                    start_time: event.extendedProps.start_time,
+                    end_time: event.extendedProps.end_time,
+                });
+                setIsUpdateSlotModalOpen(true);
+            }
         } else {
             // Open frame update modal
             const frameData = extractFrameDataFromEvent(event);
@@ -610,6 +633,11 @@ const AppointmentCalendar = () => {
         refetchFrames();
     };
 
+    // Handle successful appointment update - refetch to get updated data
+    const handleAppointmentUpdated = () => {
+        refetchFrames();
+    };
+
     // Restrict selection to single day (disallow spanning across midnight)
     const handleSelectAllow = useCallback((selectInfo) => {
         const startDate = selectInfo.start.toDateString();
@@ -656,6 +684,7 @@ const AppointmentCalendar = () => {
     }, []);
 
     // Add data-parent-id attribute to slots for targeted hiding during drag
+    // Also customize booked slot display with nested appointment element
     const handleEventDidMount = useCallback((info) => {
         const { event, el } = info;
 
@@ -664,6 +693,22 @@ const AppointmentCalendar = () => {
             const frameId = event.extendedProps.frameId;
             if (frameId) {
                 el.setAttribute('data-parent-id', String(frameId));
+            }
+
+            // Add nested appointment element for booked slots
+            const appointment = event.extendedProps.appointment;
+            if (event.extendedProps.status === 'booked' && appointment) {
+                const eventMain = el.querySelector('.fc-event-main');
+                if (eventMain) {
+                    // Create nested appointment container with visitor name only
+                    const appointmentDiv = document.createElement('div');
+                    appointmentDiv.className = 'slot-appointment';
+                    appointmentDiv.setAttribute('data-appointment-id', appointment.id);
+                    appointmentDiv.textContent = appointment.visitor_name || 'Visitor';
+                    appointmentDiv.title = appointment.purpose || ''; // Show purpose on hover
+
+                    eventMain.appendChild(appointmentDiv);
+                }
             }
         }
     }, []);
@@ -961,6 +1006,15 @@ const AppointmentCalendar = () => {
                 onClose={() => setIsUpdateSlotModalOpen(false)}
                 slotData={updateSlotData}
                 onSuccess={handleSlotUpdated}
+                position={modalPosition}
+            />
+
+            {/* Update Appointment Floating Panel */}
+            <UpdateAppointmentModal
+                isOpen={isUpdateAppointmentModalOpen}
+                onClose={() => setIsUpdateAppointmentModalOpen(false)}
+                appointmentData={updateAppointmentData}
+                onSuccess={handleAppointmentUpdated}
                 position={modalPosition}
             />
         </div>

@@ -76,6 +76,23 @@ class AppointmentController extends Controller
     public function update(UpdateAppointmentRequest $request, Appointment $appointment)
     {
         $appointment = AppointmentFactory::update($appointment, $request->validated());
+
+        // Return JSON for API requests
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Appointment updated successfully',
+                'data' => [
+                    'id' => $appointment->id,
+                    'visitor_name' => $appointment->visitor_name,
+                    'student_name' => $appointment->student_name,
+                    'phone_number' => $appointment->phone_number,
+                    'email' => $appointment->email,
+                    'purpose' => $appointment->purpose,
+                    'status' => $appointment->status,
+                ],
+            ]);
+        }
+
         return redirect()->route('appointments.show', $appointment->id)
             ->with('success', 'Appointment updated successfully');
     }

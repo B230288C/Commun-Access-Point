@@ -199,6 +199,7 @@
 }
 
 .fc-timegrid-event .fc-event-time {
+    color: #1F1F1F !important;
     font-size: 11px !important;
     font-weight: 600 !important;
 }
@@ -497,4 +498,103 @@
 
 .fc-event:hover .fc-event-resizer {
     background-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ========================================
+   Booked Slot Styles
+   Display appointment nested inside slot
+   ======================================== */
+
+/* Nested appointment container inside booked slot - visitor name only */
+.slot-appointment {
+    background-color: #FFFFFF !important;
+    border: 1px solid #A7F3D0 !important;
+    border-radius: 3px !important;
+    padding: 2px 6px !important;
+    margin: 0 3px 3px 3px !important;
+    cursor: pointer !important;
+    transition: all 150ms ease-in-out !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #1F1F1F !important;
+    line-height: 1.4 !important;
+}
+
+.slot-appointment:hover {
+    background-color: #F0FDF4 !important;
+    border-color: #6EE7B7 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Booked slot - position appointment right below time */
+.event-slot.slot-booked .fc-event-main {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    height: 100% !important;
+    gap: 0 !important;
+}
+
+/* Booked slot base styling */
+.event-slot.slot-booked {
+    cursor: pointer !important;
+}
+
+/* Dimmed slots (frame is inactive) */
+.event-slot.slot-dimmed {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.event-slot.slot-dimmed:hover {
+    filter: none !important;
+}
+
+.event-slot.slot-dimmed .slot-appointment {
+    pointer-events: none !important;
+}
+
+/* =======================================================
+   FIX: Booked Slot Layout (Compact Mode)
+   Forces the white card to sit directly below the time
+   ======================================================= */
+
+/* 1. Target the Flex Container (The Frame) */
+.event-slot.slot-booked .fc-event-main-frame {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important; /* Force content to top */
+    height: 20% !important;
+}
+
+/* 2. Compact the Time Element */
+.event-slot.slot-booked .fc-event-time {
+    flex: 0 0 auto !important;       /* Don't grow */
+    height: auto !important;         /* Fit to content */
+    line-height: 1.1 !important;     /* Tight line height */
+    padding-bottom: 1px !important;  /* Tiny padding for visual balance */
+    margin: 0 !important;            /* Remove margins */
+}
+
+/* 3. Reset the Sticky Title Wrapper */
+.event-slot.slot-booked .fc-event-title-container,
+.event-slot.slot-booked .fc-event-title.fc-sticky {
+    position: static !important;     /* Disable sticky behavior */
+    display: block !important;       /* Normal block display */
+    flex: 0 1 auto !important;       /* Allow shrinking, prevent growing */
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;       /* Collapse container height */
+}
+
+/* 4. Formatting the White Card */
+.event-slot.slot-booked .slot-appointment {
+    margin-top: 1% !important;
+    width: 90% !important;          /* Full width */
+    box-sizing: border-box !important;
 }
