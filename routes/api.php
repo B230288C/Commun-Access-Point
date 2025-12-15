@@ -17,16 +17,16 @@ Route::prefix('appointments')->middleware('auth')->group(function () {
     Route::post('/', [AppointmentController::class, 'store']);
 
     // 查看单个预约
-    Route::get('/{id}', [AppointmentController::class, 'show']);
+    Route::get('/{appointment}', [AppointmentController::class, 'show']);
 
     // 更新预约
-    Route::put('/{id}', [AppointmentController::class, 'update']);
+    Route::put('/{appointment}', [AppointmentController::class, 'update']);
 
     // Delete appointment
-    Route::delete('/{id}', [AppointmentController::class, 'destroy']);
+    Route::delete('/{appointment}', [AppointmentController::class, 'destroy']);
 
     // 取消预约
-    Route::patch('/{id}/cancel', [AppointmentController::class, 'cancel']);
+    Route::patch('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
 });
 
 // ==========================
