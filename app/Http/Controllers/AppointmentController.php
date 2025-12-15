@@ -29,6 +29,51 @@ class AppointmentController extends Controller
     }
 
     /**
+     * GET /api/appointments/staff/{staffId}
+     * Get appointments by staff ID for API
+     */
+    public function getByStaff(int $staffId)
+    {
+        $appointments = $this->appointmentRepo->getByStaffId($staffId);
+
+        return response()->json($appointments->map(function ($appointment) {
+            $slot = $appointment->availabilitySlot;
+            $frame = $slot?->availabilityFrame;
+
+            return [
+                'id' => $appointment->id,
+                'visitor_name' => $appointment->visitor_name,
+                'student_name' => $appointment->student_name,
+                'phone_number' => $appointment->phone_number,
+                'email' => $appointment->email,
+                'purpose' => $appointment->purpose,
+                'status' => $appointment->status,
+                'staff' => $appointment->staff ? [
+                    'id' => $appointment->staff->id,
+                    'name' => $appointment->staff->name,
+                    'email' => $appointment->staff->email,
+                    'phone' => $appointment->staff->phone,
+                    'department' => $appointment->staff->department,
+                    'position' => $appointment->staff->position,
+                ] : null,
+                'slot' => $slot ? [
+                    'id' => $slot->id,
+                    'start_time' => $slot->start_time,
+                    'end_time' => $slot->end_time,
+                    'status' => $slot->status,
+                ] : null,
+                'frame' => $frame ? [
+                    'id' => $frame->id,
+                    'date' => $frame->date,
+                    'title' => $frame->title,
+                ] : null,
+                'created_at' => $appointment->created_at,
+                'updated_at' => $appointment->updated_at,
+            ];
+        }));
+    }
+
+    /**
      * GET /appointments/create
      * Display create appointment form
      */
@@ -104,6 +149,14 @@ class AppointmentController extends Controller
     public function destroy(Appointment $appointment)
     {
         AppointmentFactory::delete($appointment);
+
+        // Return JSON for API requests
+        if (request()->expectsJson()) {
+            return response()->json([
+                'message' => 'Appointment deleted successfully',
+            ]);
+        }
+
         return redirect()->route('appointments.index')
             ->with('success', 'Appointment deleted successfully');
     }

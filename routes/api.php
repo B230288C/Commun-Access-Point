@@ -10,6 +10,9 @@ use App\Http\Controllers\PublicBookingController;
 // Appointment Routes
 // ==========================
 Route::prefix('appointments')->middleware('auth')->group(function () {
+    // Get appointments by staff ID
+    Route::get('/staff/{staffId}', [AppointmentController::class, 'getByStaff']);
+
     // 创建预约
     Route::post('/', [AppointmentController::class, 'store']);
 
@@ -18,6 +21,9 @@ Route::prefix('appointments')->middleware('auth')->group(function () {
 
     // 更新预约
     Route::put('/{id}', [AppointmentController::class, 'update']);
+
+    // Delete appointment
+    Route::delete('/{id}', [AppointmentController::class, 'destroy']);
 
     // 取消预约
     Route::patch('/{id}/cancel', [AppointmentController::class, 'cancel']);

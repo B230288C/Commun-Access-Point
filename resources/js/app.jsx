@@ -1,7 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Layout from './components/Layout';
-import MainContent from './components/MainContent';
 import Login from './components/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import '../css/app.css';
@@ -30,11 +29,7 @@ function AppContent() {
         return <Login />;
     }
 
-    return (
-        <Layout>
-            <MainContent />
-        </Layout>
-    );
+    return <Layout />;
 }
 
 function App() {

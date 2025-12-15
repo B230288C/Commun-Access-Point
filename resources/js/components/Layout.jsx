@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import MainContent from './MainContent';
 
-const Layout = ({ children }) => {
+const Layout = () => {
     const [sidebarExpanded, setSidebarExpanded] = useState(false);
+    const [activeView, setActiveView] = useState('dashboard');
+
+    const handleNavigate = (viewId) => {
+        setActiveView(viewId);
+    };
 
     return (
         <div className="layout-container">
@@ -11,9 +17,11 @@ const Layout = ({ children }) => {
             <Sidebar
                 isExpanded={sidebarExpanded}
                 onExpandChange={setSidebarExpanded}
+                activeView={activeView}
+                onNavigate={handleNavigate}
             />
             <main className={`main-content ${sidebarExpanded ? 'ml-48' : 'ml-16'}`}>
-                {children}
+                <MainContent activeView={activeView} />
             </main>
         </div>
     );

@@ -27,14 +27,19 @@ class AppointmentRepository
     }
 
     /**
-     * Get appointments by staff ID
+     * Get appointments by staff ID with slot and frame info
      */
     public function getByStaffId(int $staffId): Collection
     {
         return Appointment::where('staff_id', $staffId)
-            ->orderBy('date', 'asc')
-            ->orderBy('start_time', 'asc')
-            ->get();
+            ->with(['staff', 'availabilitySlot.availabilityFrame'])
+            ->get()
+            ->sortBy(function ($appointment) {
+                $frame = $appointment->availabilitySlot?->availabilityFrame;
+                $slot = $appointment->availabilitySlot;
+                return ($frame?->date ?? '9999-99-99') . ' ' . ($slot?->start_time ?? '99:99:99');
+            })
+            ->values();
     }
 
     /**

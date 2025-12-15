@@ -1,17 +1,14 @@
-const Sidebar = ({ isExpanded, onExpandChange }) => {
+const Sidebar = ({ isExpanded, onExpandChange, activeView, onNavigate }) => {
     const menuItems = [
         {
             id: 'dashboard',
             label: 'Dashboard',
             icon: 'fas fa-chart-line',
-            href: '/dashboard',
-            active: true,
         },
         {
-            id: 'appointment',
-            label: 'Appointment',
-            icon: 'fas fa-calendar',
-            href: '/appointment',
+            id: 'appointments',
+            label: 'Appointments',
+            icon: 'fas fa-calendar-check',
         },
     ];
 
@@ -23,11 +20,11 @@ const Sidebar = ({ isExpanded, onExpandChange }) => {
         >
             <nav className="sidebar-nav">
                 {menuItems.map((item) => (
-                    <a
+                    <button
                         key={item.id}
-                        href={item.href}
-                        className={`sidebar-item ${
-                            item.active ? 'sidebar-item-active' : 'sidebar-item-default'
+                        onClick={() => onNavigate(item.id)}
+                        className={`sidebar-item w-full text-left ${
+                            activeView === item.id ? 'sidebar-item-active' : 'sidebar-item-default'
                         }`}
                         title={!isExpanded ? item.label : ''}
                     >
@@ -41,7 +38,7 @@ const Sidebar = ({ isExpanded, onExpandChange }) => {
                         }`}>
                             {item.label}
                         </span>
-                    </a>
+                    </button>
                 ))}
             </nav>
         </aside>
