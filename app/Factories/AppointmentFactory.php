@@ -2,7 +2,9 @@
 
 namespace App\Factories;
 
+use App\Enums\AvailabilitySlotStatus;
 use App\Models\Appointment;
+use App\Models\AvailabilitySlot;
 use App\Models\Staff;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -49,12 +51,23 @@ class AppointmentFactory
     }
 
     /**
-     * Delete an appointment
+     * Delete an appointment and set the slot status back to available
      */
     public static function delete(Appointment $appointment): bool
     {
         try {
-            return $appointment->delete();
+            return DB::transaction(function () use ($appointment) {
+                $slotId = $appointment->availability_slot_id;
+
+                $appointment->delete();
+
+                if ($slotId) {
+                    AvailabilitySlot::where('id', $slotId)
+                        ->update(['status' => AvailabilitySlotStatus::Available->value]);
+                }
+
+                return true;
+            });
         } catch (\Exception $e) {
             Log::error('Failed to delete appointment', [
                 'id' => $appointment->id,
