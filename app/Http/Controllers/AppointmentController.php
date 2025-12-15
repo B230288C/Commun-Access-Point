@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\Staff;
+use Illuminate\Http\Request;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
 use App\Repositories\AppointmentRepository;
@@ -22,10 +23,20 @@ class AppointmentController extends Controller
      * GET /appointments
      * Display list of all appointments with pagination
      */
-    public function index()
+    public function index(Request $request)
     {
-        $appointments = $this->appointmentRepo->getAll(perPage: 15);
-        return view('appointments.index', compact('appointments'));
+        // Collect filters from React request
+        $filters = [
+            'status'  => $request->get('status'),
+            'search'  => $request->get('search'),
+            'user_id' => $request->get('user_id'), // Ensure React sends this
+        ];
+
+        // Call Repository
+        $appointments = $this->appointmentRepo->getFilteredList($filters, 5);
+
+        // Return JSON
+        return response()->json($appointments);
     }
 
     /**

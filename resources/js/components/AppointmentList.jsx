@@ -1,16 +1,106 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const AppointmentList = ({
-    appointments,
-    loading,
+    // Removed 'appointments' and 'loading' from props as they are handled internally now
+    refreshTrigger, // New prop to trigger re-fetch
     selectedAppointmentId,
     onSelectAppointment,
     onEditAppointment,
     onDeleteAppointment,
 }) => {
-    // Local state for filters
+    const { user } = useAuth();
+    
+    // --- Local State ---
+    const [appointments, setAppointments] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    // Filter & Pagination State
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
+    // Ref for debounce timer
+    const debounceTimeout = useRef(null);
+
+    // --- API Fetch Function ---
+    const fetchAppointments = async (page, status, search) => {
+        if (!user?.id) return;
+        
+        setLoading(true);
+        try {
+            // Construct query parameters
+            const params = new URLSearchParams({
+                page: page,
+                status: status,
+                search: search,
+                user_id: user.id
+            });
+
+            const response = await fetch(`/api/appointments?${params.toString()}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    // Use optional chaining to prevent errors if meta tag is missing
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+            
+            if (!response.ok) throw new Error("Failed to fetch");
+
+            const data = await response.json();
+
+            // Handle Laravel Pagination Response Structure
+            if (data.data) {
+                // 🛑 KEY FIX: Map backend data to match frontend naming conventions
+                const mappedData = data.data.map(apt => ({
+                    ...apt,
+                    // Map 'availability_slot' (backend) to 'slot' (frontend expectation)
+                    slot: apt.availability_slot, 
+                    // Map the nested frame directly to 'frame' for easier access
+                    frame: apt.availability_slot?.availability_frame 
+                }));
+
+                setAppointments(mappedData);
+                setTotalPages(data.last_page);
+                setCurrentPage(data.current_page);
+            } else {
+                setAppointments([]);
+            }
+        } catch (error) {
+            console.error("Failed to fetch appointments", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- Effect 1: Handle Search & Filter Changes (Debounced) ---
+    useEffect(() => {
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+
+        // Wait 500ms after typing stops before fetching
+        debounceTimeout.current = setTimeout(() => {
+            // Reset to page 1 when filter changes
+            fetchAppointments(1, selectedStatus, searchTerm);
+            setCurrentPage(1); 
+        }, 500);
+
+        return () => clearTimeout(debounceTimeout.current);
+    }, [searchTerm, selectedStatus]);
+
+    // --- Effect 2: Handle Page Changes & Refresh Trigger ---
+    useEffect(() => {
+        // Skip initial fetch if handled by Effect 1 (to avoid double fetch on mount)
+        // But re-fetch if page > 1 or if refreshTrigger changed
+        if (currentPage > 1 || refreshTrigger > 0) {
+            fetchAppointments(currentPage, selectedStatus, searchTerm);
+        }
+    }, [currentPage, refreshTrigger]);
+
+
+    // --- Helper Functions ---
 
     // Get status badge styles
     const getStatusBadge = (status) => {
@@ -25,7 +115,7 @@ const AppointmentList = ({
         const config = statusConfig[status] || statusConfig.pending;
         return (
             <span
-                className="px-2 py-0.5 text-xs font-medium rounded-full"
+                className="px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap"
                 style={{ backgroundColor: config.bg, color: config.text }}
             >
                 {config.label}
@@ -52,26 +142,10 @@ const AppointmentList = ({
         return `${displayHour}:${minutes} ${ampm}`;
     };
 
-    // 1. Filter Logic (Updated: Removed Purpose search)
-    const filteredAppointments = useMemo(() => {
-        return appointments.filter(apt => {
-            // Status Check
-            const statusMatch = selectedStatus === 'all' || apt.status === selectedStatus;
-            
-            // Search Check (Visitor Name OR Student Name ONLY)
-            const term = searchTerm.toLowerCase();
-            const searchMatch = !term || 
-                (apt.visitor_name || '').toLowerCase().includes(term) ||
-                (apt.student_name || '').toLowerCase().includes(term);
-
-            return statusMatch && searchMatch;
-        });
-    }, [appointments, searchTerm, selectedStatus]);
-
-    // 2. Group filtered appointments by date
+    // Group appointments by date (Client-side grouping of the fetched page)
     const groupedAppointments = useMemo(() => {
         const groups = {};
-        filteredAppointments.forEach((apt) => {
+        appointments.forEach((apt) => {
             const date = apt.frame?.date || 'No Date';
             if (!groups[date]) {
                 groups[date] = [];
@@ -89,18 +163,27 @@ const AppointmentList = ({
             date,
             appointments: groups[date],
         }));
-    }, [filteredAppointments]);
+    }, [appointments]);
+
+    // Pagination Handlers
+    const handlePrevPage = () => {
+        if (currentPage > 1) setCurrentPage(prev => prev - 1);
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+    };
 
     return (
-        <div className="appointment-list h-full flex flex-col">
+        <div className="appointment-list h-full flex flex-col bg-white">
             
-            {/* --- Filter Controls --- */}
-            <div className="p-3 border-b border-[#E0E0E0] bg-white sticky top-0 z-10 gap-2 flex flex-col">
+            {/* --- Filter Controls (Row Layout) --- */}
+            <div className="p-3 border-b border-[#E0E0E0] bg-white sticky top-0 z-10 flex items-center gap-2">
                 {/* Search Bar */}
-                <div className="relative">
+                <div className="relative flex-1">
                     <input
                         type="text"
-                        placeholder="Search visitor or student name..." 
+                        placeholder="Search visitor/student..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full h-9 pl-9 pr-3 text-sm border border-[#E0E0E0] rounded-lg focus:outline-none focus:border-[#2563EB]"
@@ -114,12 +197,12 @@ const AppointmentList = ({
                 <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full h-9 px-3 text-sm border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#2563EB]"
+                    className="w-32 h-9 px-2 text-sm border border-[#E0E0E0] rounded-lg bg-white focus:outline-none focus:border-[#2563EB]"
                 >
-                    <option value="all">All Statuses</option>
+                    <option value="all">All</option>
                     <option value="pending">Pending</option>
-                    <option value="approved">Approved/Booked</option>
-                    <option value="completed">Completed</option>
+                    <option value="approved">Booked</option>
+                    <option value="completed">Done</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
             </div>
@@ -128,18 +211,17 @@ const AppointmentList = ({
             {loading && (
                 <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#2563EB]"></div>
-                    <span className="ml-2 text-sm text-[#6D6D6D]">Loading...</span>
                 </div>
             )}
 
             {/* --- Empty State --- */}
-            {!loading && filteredAppointments.length === 0 && (
+            {!loading && appointments.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 text-center flex-1">
                     <svg className="w-12 h-12 text-[#E0E0E0] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p className="text-sm text-[#6D6D6D]">
-                        {appointments.length === 0 ? "No appointments yet" : "No results found"}
+                        No appointments found
                     </p>
                 </div>
             )}
@@ -177,7 +259,7 @@ const AppointmentList = ({
                                             {getStatusBadge(apt.status)}
                                         </div>
 
-                                        {/* Student Name (New Line) */}
+                                        {/* Student Name */}
                                         {apt.student_name && (
                                             <div className="text-xs text-[#6D6D6D] mb-1 flex items-center gap-1">
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,11 +296,8 @@ const AppointmentList = ({
                                                     onEditAppointment(apt);
                                                 }}
                                                 className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#2563EB] bg-[#EEF2FF] rounded hover:bg-[#E0E7FF] transition-colors"
-                                                title="Edit appointment"
+                                                title="Edit"
                                             >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
                                                 Edit
                                             </button>
                                             <button
@@ -227,11 +306,8 @@ const AppointmentList = ({
                                                     onDeleteAppointment(apt);
                                                 }}
                                                 className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#991B1B] bg-[#FEE2E2] rounded hover:bg-[#FECACA] transition-colors"
-                                                title="Delete appointment"
+                                                title="Delete"
                                             >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
                                                 Delete
                                             </button>
                                         </div>
@@ -242,6 +318,27 @@ const AppointmentList = ({
                     ))}
                 </div>
             )}
+
+            {/* --- Pagination Controls --- */}
+            <div className="p-3 border-t border-[#E0E0E0] bg-[#F9FAFB] flex items-center justify-between">
+                <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1 || loading}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
+                    Previous
+                </button>
+                <span className="text-xs text-gray-500">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages || loading}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
+                    Next
+                </button>
+            </div>
         </div>
     );
 };

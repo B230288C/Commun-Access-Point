@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AppointmentList from './AppointmentList';
 import AppointmentDetail from './AppointmentDetail';
@@ -6,71 +6,20 @@ import UpdateAppointmentModal from './UpdateAppointmentModal';
 
 const AppointmentsPage = () => {
     const { user } = useAuth();
-    const [appointments, setAppointments] = useState([]);
-    const [loading, setLoading] = useState(true);
+    
+    // --- State ---
+    // Removed: appointments, loading (handled by list now)
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editAppointmentData, setEditAppointmentData] = useState(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, appointment: null });
+    
+    // New: Trigger to force list reload after update/delete
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // Fetch appointments
-    useEffect(() => {
-        const fetchAppointments = async () => {
-            if (!user?.id) return;
-
-            setLoading(true);
-
-            try {
-                const response = await fetch(`/api/appointments/staff/${user.id}`, {
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch appointments');
-                }
-
-                const data = await response.json();
-                setAppointments(data);
-            } catch (err) {
-                console.error('Error fetching appointments:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAppointments();
-    }, [user?.id]);
-
-    // Refetch appointments
-    const refetchAppointments = async () => {
-        if (!user?.id) return;
-
-        try {
-            const response = await fetch(`/api/appointments/staff/${user.id}`, {
-                credentials: 'same-origin',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setAppointments(data);
-
-                // Update selected appointment if it still exists
-                if (selectedAppointment) {
-                    const updated = data.find(a => a.id === selectedAppointment.id);
-                    setSelectedAppointment(updated || null);
-                }
-            }
-        } catch (err) {
-            console.error('Error refetching appointments:', err);
-        }
+    // Helper to refresh the list
+    const triggerRefresh = () => {
+        setRefreshTrigger(prev => prev + 1);
     };
 
     // Handle appointment selection
@@ -116,8 +65,9 @@ const AppointmentsPage = () => {
                 setSelectedAppointment(null);
             }
 
-            // Refetch appointments
-            refetchAppointments();
+            // Refresh the list
+            triggerRefresh();
+
         } catch (err) {
             console.error('Error deleting appointment:', err);
         } finally {
@@ -127,7 +77,11 @@ const AppointmentsPage = () => {
 
     // Handle successful appointment update
     const handleAppointmentUpdated = () => {
-        refetchAppointments();
+        triggerRefresh(); // Reload list
+        // Optionally refetch selected appointment details if needed, 
+        // but typically the list reload is enough.
+        // If you need to update the detail view instantly without re-selecting:
+        // You might want to fetch the single appointment details here.
     };
 
     // Close detail view
@@ -136,9 +90,9 @@ const AppointmentsPage = () => {
     };
 
     return (
-        <div className="appointments-page p-6">
+        <div className="appointments-page h-full flex flex-col p-6">
             {/* Page Header */}
-            <div className="mb-6">
+            <div className="mb-6 flex-shrink-0">
                 <h1 className="text-2xl font-bold text-[#1F1F1F]">Appointments</h1>
                 <p className="text-sm text-[#6D6D6D] mt-1">
                     Manage and view all your appointments
@@ -146,25 +100,21 @@ const AppointmentsPage = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex gap-6">
+            <div className="flex gap-6 flex-1 min-h-0">
                 {/* Left Panel - Appointments List */}
-                <div className="w-96 flex-shrink-0">
-                    <div className="bg-white rounded-xl border border-[#E0E0E0] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="w-96 flex-shrink-0 flex flex-col">
+                    <div className="bg-white rounded-xl border border-[#E0E0E0] shadow-sm overflow-hidden flex flex-col h-full">
                         {/* List Header */}
-                        <div className="p-4 border-b border-[#E0E0E0] bg-[#FAFAFA]">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-[#1F1F1F]">All Appointments</h2>
-                                <span className="px-2 py-1 text-xs font-medium text-[#6D6D6D] bg-[#E5E7EB] rounded-full">
-                                    {appointments.length}
-                                </span>
-                            </div>
+                        <div className="p-4 border-b border-[#E0E0E0] bg-[#FAFAFA] flex-shrink-0">
+                            <h2 className="text-lg font-semibold text-[#1F1F1F]">All Appointments</h2>
+                            {/* Note: We removed the count badge because parent doesn't know total count anymore */}
                         </div>
 
                         {/* List Content */}
-                        <div className="max-h-[calc(100vh-280px)] overflow-y-auto">
+                        <div className="flex-1 overflow-hidden relative">
                             <AppointmentList
-                                appointments={appointments}
-                                loading={loading}
+                                // Pass the refresh trigger
+                                refreshTrigger={refreshTrigger} 
                                 selectedAppointmentId={selectedAppointment?.id}
                                 onSelectAppointment={handleSelectAppointment}
                                 onEditAppointment={handleEditAppointment}
@@ -175,8 +125,8 @@ const AppointmentsPage = () => {
                 </div>
 
                 {/* Right Panel - Appointment Detail */}
-                <div className="flex-1">
-                    <div className="bg-white rounded-xl border border-[#E0E0E0] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] overflow-hidden min-h-[400px]">
+                <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-xl border border-[#E0E0E0] shadow-sm overflow-hidden h-full">
                         <AppointmentDetail
                             appointment={selectedAppointment}
                             onEdit={handleEditAppointment}

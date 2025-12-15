@@ -10,6 +10,9 @@ use App\Http\Controllers\PublicBookingController;
 // Appointment Routes
 // ==========================
 Route::prefix('appointments')->middleware('auth')->group(function () {
+    // Main Index Route (For Pagination & Filtering)
+    Route::get('/', [AppointmentController::class, 'index']);
+
     // Get appointments by staff ID
     Route::get('/staff/{staffId}', [AppointmentController::class, 'getByStaff']);
 
