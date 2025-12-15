@@ -106,8 +106,8 @@ const AppointmentDetail = ({ appointment, onEdit, onDelete, onClose }) => {
     );
 
     return (
-        <div className="appointment-detail h-full flex flex-col">
-            {/* Header */}
+        <div className="appointment-detail h-full flex flex-col bg-white">
+            {/* Header Section */}
             <div className="flex items-center justify-between p-4 border-b border-[#E0E0E0]">
                 <h2 className="text-lg font-semibold text-[#1F1F1F]">Appointment Details</h2>
                 <button
@@ -121,11 +121,12 @@ const AppointmentDetail = ({ appointment, onEdit, onDelete, onClose }) => {
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-                {/* Status Banner */}
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto p-6">
+                
+                {/* 1. Status Banner - Full Width */}
                 <div
-                    className="rounded-lg p-3 mb-6 flex items-center gap-3"
+                    className="rounded-lg p-3 mb-6 flex items-center gap-3 w-full"
                     style={{ backgroundColor: statusConfig.bg }}
                 >
                     <div
@@ -142,116 +143,131 @@ const AppointmentDetail = ({ appointment, onEdit, onDelete, onClose }) => {
                     </div>
                 </div>
 
-                {/* Date & Time Section */}
-                <InfoSection
-                    title="Date & Time"
-                    icon={
-                        <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    }
-                >
-                    <div className="bg-[#FAFAFA] rounded-lg p-3">
-                        <p className="text-sm font-medium text-[#1F1F1F] mb-1">
-                            {formatDate(appointment.frame?.date)}
-                        </p>
-                        {appointment.slot && (
-                            <p className="text-sm text-[#6D6D6D]">
-                                {formatTime(appointment.slot.start_time)} - {formatTime(appointment.slot.end_time)}
-                            </p>
-                        )}
-                        {appointment.frame?.title && (
-                            <p className="text-xs text-[#6D6D6D] mt-1">
-                                Frame: {appointment.frame.title}
-                            </p>
-                        )}
-                    </div>
-                </InfoSection>
-
-                {/* Visitor Information Section */}
-                <InfoSection
-                    title="Visitor Information"
-                    icon={
-                        <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                    }
-                >
-                    <div className="space-y-1">
-                        <InfoRow label="Name" value={appointment.visitor_name} />
-                        <InfoRow label="Student" value={appointment.student_name} />
-                        <InfoRow
-                            label="Email"
-                            value={appointment.email}
-                            isLink
-                            href={`mailto:${appointment.email}`}
-                        />
-                        <InfoRow
-                            label="Phone"
-                            value={appointment.phone_number}
-                            isLink
-                            href={`tel:${appointment.phone_number}`}
-                        />
-                    </div>
-                </InfoSection>
-
-                {/* Staff Information Section */}
-                {appointment.staff && (
-                    <InfoSection
-                        title="Staff Information"
-                        icon={
-                            <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        }
-                    >
-                        <div className="space-y-1">
-                            <InfoRow label="Name" value={appointment.staff.name} />
-                            <InfoRow label="Department" value={appointment.staff.department} />
-                            <InfoRow label="Position" value={appointment.staff.position} />
-                            <InfoRow
-                                label="Email"
-                                value={appointment.staff.email}
-                                isLink
-                                href={`mailto:${appointment.staff.email}`}
-                            />
-                            <InfoRow
-                                label="Phone"
-                                value={appointment.staff.phone}
-                                isLink
-                                href={`tel:${appointment.staff.phone}`}
-                            />
-                        </div>
-                    </InfoSection>
-                )}
-
-                {/* Additional Information Section */}
-                <InfoSection
-                    title="Additional Information"
-                    icon={
-                        <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    }
-                >
-                    <div className="space-y-3">
-                        <div>
-                            <p className="text-xs text-[#6D6D6D] mb-1">Purpose of Visit</p>
-                            <p className="text-sm text-[#1F1F1F] bg-[#FAFAFA] rounded-lg p-3">
-                                {appointment.purpose || 'No purpose specified'}
-                            </p>
-                        </div>
-                        {appointment.created_at && (
-                            <div className="text-xs text-[#6D6D6D]">
-                                Created: {new Date(appointment.created_at).toLocaleString()}
+                {/* 2. Grid Layout System 
+                   - Mobile: 1 column (stack)
+                   - Desktop (lg): 2 columns
+                   - Gap: 24px (gap-6) between columns and rows
+                */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    {/* Position: Top Left - Date & Time */}
+                    <div className="col-span-1">
+                        <InfoSection
+                            title="Date & Time"
+                            icon={
+                                <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            }
+                        >
+                            <div className="bg-[#FAFAFA] rounded-lg p-3">
+                                <p className="text-sm font-medium text-[#1F1F1F] mb-1">
+                                    {formatDate(appointment.frame?.date)}
+                                </p>
+                                {appointment.slot && (
+                                    <p className="text-sm text-[#6D6D6D]">
+                                        {formatTime(appointment.slot.start_time)} - {formatTime(appointment.slot.end_time)}
+                                    </p>
+                                )}
+                                {appointment.frame?.title && (
+                                    <p className="text-xs text-[#6D6D6D] mt-1">
+                                        Frame: {appointment.frame.title}
+                                    </p>
+                                )}
                             </div>
-                        )}
+                        </InfoSection>
                     </div>
-                </InfoSection>
+
+                    {/* Position: Top Right - Visitor Information */}
+                    <div className="col-span-1">
+                        <InfoSection
+                            title="Visitor Information"
+                            icon={
+                                <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            }
+                        >
+                            <div className="space-y-1">
+                                <InfoRow label="Name" value={appointment.visitor_name} />
+                                <InfoRow label="Student" value={appointment.student_name} />
+                                <InfoRow
+                                    label="Email"
+                                    value={appointment.email}
+                                    isLink
+                                    href={`mailto:${appointment.email}`}
+                                />
+                                <InfoRow
+                                    label="Phone"
+                                    value={appointment.phone_number}
+                                    isLink
+                                    href={`tel:${appointment.phone_number}`}
+                                />
+                            </div>
+                        </InfoSection>
+                    </div>
+
+                    {/* Position: Bottom Left - Staff Information */}
+                    <div className="col-span-1">
+                        <InfoSection
+                            title="Staff Information"
+                            icon={
+                                <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            }
+                        >
+                            <div className="space-y-1">
+                                <InfoRow label="Name" value={appointment.staff.name} />
+                                <InfoRow label="Department" value={appointment.staff.department} />
+                                <InfoRow label="Position" value={appointment.staff.position} />
+                                <InfoRow
+                                    label="Email"
+                                    value={appointment.staff.email}
+                                    isLink
+                                    href={`mailto:${appointment.staff.email}`}
+                                />
+                                <InfoRow
+                                    label="Phone"
+                                    value={appointment.staff.phone}
+                                    isLink
+                                    href={`tel:${appointment.staff.phone}`}
+                                />
+                            </div>
+                        </InfoSection>
+                    </div>
+
+                    {/* Position: Bottom Right - Additional Information */}
+                    <div className="col-span-1">
+                        <InfoSection
+                            title="Additional Information"
+                            icon={
+                                <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            }
+                        >
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-xs text-[#6D6D6D] mb-1">Purpose of Visit</p>
+                                    <p className="text-sm text-[#1F1F1F] bg-[#FAFAFA] rounded-lg p-3 min-h-[60px]">
+                                        {appointment.purpose || 'No purpose specified'}
+                                    </p>
+                                </div>
+                                {appointment.created_at && (
+                                    <div className="text-xs text-[#6D6D6D]">
+                                        Created: {new Date(appointment.created_at).toLocaleString()}
+                                    </div>
+                                )}
+                            </div>
+                        </InfoSection>
+                    </div>
+
+                </div> {/* End Grid Container */}
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-[#E0E0E0] flex items-center gap-3">
+            <div className="p-4 border-t border-[#E0E0E0] flex items-center gap-3 bg-white mt-auto">
                 <button
                     onClick={() => onEdit(appointment)}
                     className="flex-1 h-10 flex items-center justify-center gap-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-[#1E4FCC] active:bg-[#1B49B2] transition-colors"
