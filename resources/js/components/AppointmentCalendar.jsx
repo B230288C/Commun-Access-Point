@@ -591,8 +591,10 @@ const AppointmentCalendar = () => {
             refetchFrames();
         } catch (err) {
             console.error('Error moving frame:', err);
-            // Revert the drop on error
+            // Revert the frame drop on error
             revert();
+            // Refetch to reset slots to their original positions
+            refetchFrames();
         }
     };
 

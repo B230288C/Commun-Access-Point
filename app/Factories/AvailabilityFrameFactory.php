@@ -3,6 +3,7 @@
 namespace App\Factories;
 
 use App\Enums\AvailabilitySlotStatus;
+use App\Exceptions\FrameHasBookedSlotsException;
 use App\Exceptions\FrameOverlapException;
 use App\Models\AvailabilityFrame;
 use App\Models\AvailabilitySlot;
@@ -408,6 +409,7 @@ class AvailabilityFrameFactory
      * @param int $deltaMinutes Time difference in minutes (positive or negative)
      * @param string|null $newDate New date for the frame (Y-m-d format)
      * @return AvailabilityFrame
+     * @throws FrameHasBookedSlotsException
      * @throws FrameOverlapException
      * @throws \Exception
      */
@@ -415,6 +417,18 @@ class AvailabilityFrameFactory
     {
         try {
             return DB::transaction(function () use ($frame, $deltaMinutes, $newDate) {
+                // Check if frame has any booked slots - cannot move if so
+                $bookedSlots = AvailabilitySlot::where('availability_frame_id', $frame->id)
+                    ->where('status', AvailabilitySlotStatus::Booked->value)
+                    ->get();
+
+                if ($bookedSlots->isNotEmpty()) {
+                    throw new FrameHasBookedSlotsException(
+                        'Cannot move frame: it contains booked slots',
+                        $bookedSlots->toArray()
+                    );
+                }
+
                 // Calculate new frame times
                 $frameStart = Carbon::parse($frame->start_time);
                 $frameEnd = Carbon::parse($frame->end_time);
@@ -471,6 +485,8 @@ class AvailabilityFrameFactory
 
                 return $frame->fresh()->load('availabilitySlots');
             });
+        } catch (FrameHasBookedSlotsException $e) {
+            throw $e;
         } catch (FrameOverlapException $e) {
             throw $e;
         } catch (\Exception $e) {

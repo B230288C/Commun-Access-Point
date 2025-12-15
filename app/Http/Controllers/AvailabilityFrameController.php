@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\FrameHasBookedSlotsException;
 use App\Exceptions\FrameOverlapException;
 use App\Factories\AvailabilityFrameFactory;
 use App\Http\Requests\AvailabilityFrameRequest;
@@ -148,6 +149,11 @@ class AvailabilityFrameController extends Controller
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Availability frame not found'], 404);
+        } catch (FrameHasBookedSlotsException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'has_booked_slots',
+            ], 409); // 409 Conflict
         } catch (FrameOverlapException $e) {
             return response()->json([
                 'message' => $e->getMessage(),
