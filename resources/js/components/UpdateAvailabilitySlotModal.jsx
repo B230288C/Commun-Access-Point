@@ -143,25 +143,35 @@ export default function UpdateAvailabilitySlotModal({ isOpen, onClose, slotData,
                         </div>
                     </div>
 
-                    {/* Status Dropdown */}
+                    {/* Status Dropdown / Read-only Display */}
                     <div className="form-group">
                         <label htmlFor="status" className="form-label">
                             Status <span className="text-required">*</span>
                         </label>
-                        <select
-                            id="status"
-                            name="status"
-                            value={formData.status}
-                            onChange={handleChange}
-                            className="form-input"
-                            disabled={loading}
-                        >
-                            <option value="available">Available</option>
-                            <option value="booked">Booked</option>
-                            <option value="unavailable">Unavailable</option>
-                        </select>
 
-                        {/* Status indicator */}
+                        {slotData?.status === 'booked' ? (
+                            /* CASE 1: Slot is Booked -> Read-only View */
+                            <div className="w-full h-10 px-3 flex items-center text-sm font-medium text-[#065F46] bg-[#D1FAE5] border border-[#A7F3D0] rounded-lg cursor-not-allowed">
+                                <i className="fas fa-calendar-check mr-2"></i>
+                                Booked
+                            </div>
+                        ) : (
+                            /* CASE 2: Slot is NOT Booked -> Dropdown (Available/Unavailable only) */
+                            <select
+                                id="status"
+                                name="status"
+                                value={formData.status}
+                                onChange={handleChange}
+                                className="form-input"
+                                disabled={loading}
+                            >
+                                <option value="available">Available</option>
+                                {/* 'Booked' option removed from here */}
+                                <option value="unavailable">Unavailable</option>
+                            </select>
+                        )}
+
+                        {/* Status indicator (Optional: You can keep or remove this since the badge above explains it well enough) */}
                         <div
                             className="mt-2 p-2 rounded-lg border border-[#E0E0E0] flex items-center gap-2"
                             style={{ backgroundColor: getStatusColor(formData.status) }}
@@ -174,6 +184,7 @@ export default function UpdateAvailabilitySlotModal({ isOpen, onClose, slotData,
                                 {getStatusLabel(formData.status)}
                             </span>
                         </div>
+                        
                     </div>
 
                     {/* Actions */}
