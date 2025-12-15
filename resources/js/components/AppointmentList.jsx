@@ -85,18 +85,14 @@ const AppointmentList = ({
             // Reset to page 1 when filter changes
             fetchAppointments(1, selectedStatus, searchTerm);
             setCurrentPage(1); 
-        }, 500);
+        }, 300);
 
         return () => clearTimeout(debounceTimeout.current);
     }, [searchTerm, selectedStatus]);
 
     // --- Effect 2: Handle Page Changes & Refresh Trigger ---
     useEffect(() => {
-        // Skip initial fetch if handled by Effect 1 (to avoid double fetch on mount)
-        // But re-fetch if page > 1 or if refreshTrigger changed
-        if (currentPage > 1 || refreshTrigger > 0) {
-            fetchAppointments(currentPage, selectedStatus, searchTerm);
-        }
+        fetchAppointments(currentPage, selectedStatus, searchTerm);
     }, [currentPage, refreshTrigger]);
 
 
