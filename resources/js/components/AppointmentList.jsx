@@ -201,8 +201,8 @@ const AppointmentList = ({
                 >
                     <option value="all">All</option>
                     <option value="pending">Pending</option>
-                    <option value="approved">Booked</option>
-                    <option value="completed">Done</option>
+                    <option value="approved">Approved</option>
+                    <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
             </div>
