@@ -636,8 +636,48 @@ const AppointmentCalendar = () => {
     };
 
     // Handle successful appointment update - refetch to get updated data
-    const handleAppointmentUpdated = () => {
-        refetchFrames();
+    const handleAppointmentUpdated = (updatedAppointment) => {
+        setIsUpdateAppointmentModalOpen(false);
+
+        const appointmentEl = document.querySelector(`.slot-appointment[data-appointment-id="${updatedAppointment.id}"]`);
+        if (appointmentEl) {
+            appointmentEl.textContent = updatedAppointment.visitor_name || 'Visitor';
+            appointmentEl.title = updatedAppointment.purpose || '';
+        }
+
+        setFrames(prevFrames => {
+            return prevFrames.map(frame => {
+                // Optimization: If frame has no slots, skip it
+                if (!frame.slots) return frame;
+
+                // Check if this frame contains the target slot
+                const hasTargetSlot = frame.slots.some(s => s.id === updateAppointmentData.slotId);
+                if (!hasTargetSlot) return frame;
+
+                // Return a new frame object with updated slots array
+                return {
+                    ...frame,
+                    slots: frame.slots.map(slot => {
+                        // Find the specific slot being updated
+                        if (slot.id === updateAppointmentData.slotId) {
+                            // Return a NEW slot object (Triggers React re-render)
+                            return {
+                                ...slot,
+                                status: 'booked', 
+                                appointment: {
+                                    ...slot.appointment, // Keep existing fields
+                                    ...updatedAppointment // Overwrite with new name/purpose
+                                }
+                            };
+                        }
+                        return slot;
+                    })
+                };
+            });
+        });
+
+        // 3. Background refetch to ensure consistency with server
+        // refetchFrames();
     };
 
     // Restrict selection to single day (disallow spanning across midnight)
@@ -702,6 +742,11 @@ const AppointmentCalendar = () => {
             if (event.extendedProps.status === 'booked' && appointment) {
                 const eventMain = el.querySelector('.fc-event-main');
                 if (eventMain) {
+                    // Remove existing card to prevent duplicates during re-render
+                    const existingAppt = eventMain.querySelector('.slot-appointment');
+                    if (existingAppt) {
+                        existingAppt.remove();
+                    }
                     // Create nested appointment container with visitor name only
                     const appointmentDiv = document.createElement('div');
                     appointmentDiv.className = 'slot-appointment';
