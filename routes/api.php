@@ -13,19 +13,19 @@ Route::prefix('appointments')->middleware('auth')->group(function () {
     // Get appointments by staff ID
     Route::get('/staff/{staffId}', [AppointmentController::class, 'getByStaff']);
 
-    // 创建预约
+    // Create new appointment
     Route::post('/', [AppointmentController::class, 'store']);
 
-    // 查看单个预约
+    // Check appointment availability
     Route::get('/{appointment}', [AppointmentController::class, 'show']);
 
-    // 更新预约
+    // Update appointment
     Route::put('/{appointment}', [AppointmentController::class, 'update']);
 
     // Delete appointment
     Route::delete('/{appointment}', [AppointmentController::class, 'destroy']);
 
-    // 取消预约
+    // Cancel appointment
     Route::patch('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
 });
 
@@ -79,7 +79,7 @@ Route::prefix('availability-slots')->middleware('auth')->group(function () {
 });
 
 // ==========================
-// Public Booking Routes (No Auth Required)
+// Public Booking Routes
 // ==========================
 Route::prefix('public')->group(function () {
     // Get staff availability for booking page

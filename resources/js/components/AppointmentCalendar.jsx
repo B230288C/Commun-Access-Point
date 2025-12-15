@@ -200,28 +200,87 @@ const AppointmentCalendar = () => {
     }, [user?.id]);
 
     // Filter events based on search term and status
+
+    const [selectedSlotStatus, setSelectedSlotStatus] = useState('all');
+    
     const filteredEvents = useMemo(() => {
-        return allEvents.filter((event) => {
-            // In year/month view, only show frames (exclude slots)
-            if (viewMode === 'year' || viewMode === 'month') {
-                if (event.extendedProps.type === 'slot') {
-                    return false;
+        
+        // Helper: Check single event match
+        const isEventMatching = (event) => {
+            const props = event.extendedProps;
+            const type = props.type;
+
+            // 1. Frame Status Check
+            let frameStatusMatch = true;
+            if (selectedStatus !== 'all') {
+                if (type === 'frame') {
+                    frameStatusMatch = props.status === selectedStatus;
+                } else {
+                    frameStatusMatch = props.frameStatus === selectedStatus;
                 }
             }
 
-            // Filter by search term
-            const matchesSearch = event.title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+            // 2. Slot Status Check (if you added the dropdown)
+            let slotStatusMatch = true;
+            if (typeof selectedSlotStatus !== 'undefined' && selectedSlotStatus !== 'all') {
+                 if (type === 'slot') {
+                    slotStatusMatch = props.status === selectedSlotStatus;
+                }
+            }
 
-            // Filter by status
-            const matchesStatus =
-                selectedStatus === 'all' ||
-                event.extendedProps.status === selectedStatus;
+            // 3. Search Check (Title / Visitor / Student)
+            const term = searchTerm.toLowerCase();
+            let searchMatch = !term; // True if term is empty
+            
+            if (term) {
+                const titleMatch = (event.title || '').toLowerCase().includes(term);
+                const visitorMatch = (props.appointment?.visitor_name || '').toLowerCase().includes(term);
+                // ★ Added Student Name Check
+                const studentMatch = (props.appointment?.student_name || '').toLowerCase().includes(term);
+                
+                searchMatch = titleMatch || visitorMatch || studentMatch;
+            }
 
-            return matchesSearch && matchesStatus;
+            return frameStatusMatch && slotStatusMatch && searchMatch;
+        };
+
+        // Pass 1: Identify Frames to keep
+        const framesToKeep = new Set();
+        const matchedByFrame = new Set();
+
+        allEvents.forEach(event => {
+            const frameId = String(event.extendedProps.frameId);
+            
+            if (isEventMatching(event)) {
+                framesToKeep.add(frameId);
+                if (event.extendedProps.type === 'frame') {
+                    matchedByFrame.add(frameId);
+                }
+            }
         });
-    }, [allEvents, searchTerm, selectedStatus, viewMode]);
+
+        // Pass 2: Final Filter
+        return allEvents.filter(event => {
+            if ((viewMode === 'year' || viewMode === 'month') && event.extendedProps.type === 'slot') return false;
+
+            const frameId = String(event.extendedProps.frameId);
+            if (!framesToKeep.has(frameId)) return false;
+
+            if (event.extendedProps.type === 'frame') return true;
+
+            if (event.extendedProps.type === 'slot') {
+                // If filtering by Slot Status, hide non-matching siblings
+                if (typeof selectedSlotStatus !== 'undefined' && selectedSlotStatus !== 'all') {
+                    return event.extendedProps.status === selectedSlotStatus;
+                }
+
+                if (matchedByFrame.has(frameId)) return true;
+                if (isEventMatching(event)) return true;
+            }
+
+            return false;
+        });
+    }, [allEvents, searchTerm, selectedStatus, selectedSlotStatus, viewMode]); // Ensure dependencies are correct
 
     // Handler functions
     const onSearchChange = (value) => {
@@ -812,7 +871,7 @@ const AppointmentCalendar = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
-                                placeholder="Search events..."
+                                placeholder="Search event, visitor name or student name..."
                                 className="w-full h-10 px-3 pr-10 text-sm text-[#1F1F1F] bg-white border border-[#E0E0E0] rounded-lg
                                     placeholder:text-[#6D6D6D]
                                     focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]
@@ -845,7 +904,7 @@ const AppointmentCalendar = () => {
                                     hover:border-[#C0C0C0]
                                     transition-all duration-150 ease-in-out"
                             >
-                                <option value="all">All</option>
+                                <option value="all">All Frames</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
@@ -861,6 +920,27 @@ const AppointmentCalendar = () => {
                                     strokeWidth={2}
                                     d="M19 9l-7 7-7-7"
                                 />
+                            </svg>
+                        </div>
+
+                        {/* Slot Status Dropdown */}
+                        <div className="relative">
+                            <select
+                                value={selectedSlotStatus}
+                                onChange={(e) => setSelectedSlotStatus(e.target.value)}
+                                className="h-10 px-3 pr-8 text-sm font-medium text-[#1F1F1F] bg-white border border-[#E0E0E0] rounded-lg
+                                    appearance-none cursor-pointer
+                                    focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]
+                                    hover:border-[#C0C0C0] transition-all"
+                            >
+                                <option value="all">All Slots</option>
+                                <option value="booked">Booked (Appts)</option>
+                                <option value="available">Available</option>
+                                <option value="unavailable">Unavailable</option>
+                            </select>
+                            {/* Arrow Icon */}
+                            <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6D6D6D] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
                     </div>
