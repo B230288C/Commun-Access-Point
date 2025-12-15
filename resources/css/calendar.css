@@ -15,6 +15,33 @@
     border-color: #E0E0E0 !important;
 }
 
+.fc, 
+.fc-view-harness,
+.fc-scroller-harness {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.fc-scrollgrid,
+.fc-scrollgrid table,
+.fc-col-header,
+.fc-daygrid-body,
+.fc-timegrid-body,
+.fc-timegrid-slots table,
+.fc-scrollgrid-sync-table {
+    width: 100% !important; 
+    min-width: 100% !important; /* 防止被压缩 */
+}
+
+.fc-scroller {
+    overflow-y: auto !important; /* 保持垂直滚动 */
+    overflow-x: hidden !important; /* 禁止不必要的水平滚动条 */
+}
+
+.fc-timegrid-axis-frame {
+    width: 100% !important;
+}
+
 /* Day headers */
 .fc .fc-col-header-cell {
     background-color: #F5F5F5 !important;

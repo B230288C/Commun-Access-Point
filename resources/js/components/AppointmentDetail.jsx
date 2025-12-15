@@ -175,6 +175,12 @@ const AppointmentDetail = ({ appointment, onEdit, onDelete, onClose }) => {
                                     </p>
                                 )}
                             </div>
+
+                            {appointment.created_at && (
+                                    <div className="text-xs text-[#6D6D6D]">
+                                        Created: {new Date(appointment.created_at).toLocaleString()}
+                                    </div>
+                            )}
                         </InfoSection>
                     </div>
 
@@ -254,11 +260,6 @@ const AppointmentDetail = ({ appointment, onEdit, onDelete, onClose }) => {
                                         {appointment.purpose || 'No purpose specified'}
                                     </p>
                                 </div>
-                                {appointment.created_at && (
-                                    <div className="text-xs text-[#6D6D6D]">
-                                        Created: {new Date(appointment.created_at).toLocaleString()}
-                                    </div>
-                                )}
                             </div>
                         </InfoSection>
                     </div>
