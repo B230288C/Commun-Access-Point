@@ -25,7 +25,7 @@ export default function Login() {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h1 className="login-title">Access Point</h1>
+                <h1 className="login-title">Calendar Appointment</h1>
                 <p className="login-subtitle">Sign in to your account</p>
 
                 <form onSubmit={handleSubmit} className="login-form">
